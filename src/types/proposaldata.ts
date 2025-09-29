@@ -34,5 +34,7 @@ export type ProposalData = {
             steps: { label: string; desc: string }[];
         }[];
         logo_base64?: string;
+        price_basic?: string; // Added this
+        price_premium?: string; // Added this
     };
 };

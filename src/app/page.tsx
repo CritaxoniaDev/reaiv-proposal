@@ -84,10 +84,30 @@ export default function Home() {
               >
                 <InputOTPGroup>
                   {[...Array(8)].map((_, i) => (
-                    <InputOTPSlot key={i} index={i} />
+                    <InputOTPSlot
+                      key={i}
+                      index={i}
+                      className={`w-10 h-12 md:w-12 md:h-16 rounded-lg border-2 border-primary bg-white text-xl md:text-2xl font-bold text-center transition-all duration-150
+              focus:border-[#8CE232] focus:ring-2 focus:ring-[#8CE232] 
+              ${otp.length === 8 ? "border-[#8CE232] shadow-lg" : "border-slate-300"}
+            `}
+                    />
                   ))}
                 </InputOTPGroup>
               </InputOTP>
+            </div>
+            {/* Add a subtle animation or icon for feedback */}
+            <div className="flex justify-center mt-2">
+              {loading ? (
+                <svg className="animate-spin h-6 w-6 text-[#8CE232]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              ) : otp.length === 8 ? (
+                <span className="text-[#8CE232] font-semibold animate-pulse">Ready to verify!</span>
+              ) : (
+                <span className="text-slate-400 text-xs">Enter all 8 digits</span>
+              )}
             </div>
           </div>
 

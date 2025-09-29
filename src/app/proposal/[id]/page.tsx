@@ -133,19 +133,21 @@ export default function ProposalPage() {
                     <p className="mt-4 text-slate-600 leading-relaxed max-w-3xl mx-auto">
                         {proposal.overview}
                     </p>
-                    {proposal.overview_details && (
+                    {proposal.overview_details?.title?.trim() && proposal.overview_details?.description?.trim() && (
                         <div className="mt-8 text-left bg-slate-50 border border-slate-200 rounded-xl p-5">
                             <h3 className="font-semibold">{proposal.overview_details.title}</h3>
                             <p className="mt-2 text-sm text-slate-600">
                                 {proposal.overview_details.description}
                             </p>
-                            <ul className="mt-2 text-sm text-slate-700 space-y-1 list-disc pl-4">
-                                {proposal.overview_details.items.map((item, idx) => (
-                                    <li key={idx}>
-                                        <strong>{item.label}:</strong> {item.text}
-                                    </li>
-                                ))}
-                            </ul>
+                            {proposal.overview_details.items?.length > 0 && (
+                                <ul className="mt-2 text-sm text-slate-700 space-y-1 list-disc pl-4">
+                                    {proposal.overview_details.items.map((item, idx) => (
+                                        <li key={idx}>
+                                            <strong>{item.label}:</strong> {item.text}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
                     )}
                 </div>
@@ -176,8 +178,89 @@ export default function ProposalPage() {
                 </div>
             </section>
 
+            {/* Pricing Section */}
+            {(proposal.price_basic || proposal.price_premium) && (
+                <section id="pricing" className="py-20 bg-white border-t border-b border-slate-200">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="flex items-end justify-between flex-wrap gap-4">
+                            <div>
+                                <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Pricing</h2>
+                                <p className="mt-2 text-slate-600">
+                                    Simple, transparent tiers. Pick what fits today—scale when you need more.
+                                </p>
+                            </div>
+                            <span className="text-xs text-slate-500">
+                                PHP pricing • Taxes, 3rd-party fees not included
+                            </span>
+                        </div>
+
+                        <div className="mt-8 grid md:grid-cols-2 gap-6">
+                            {/* Basic Pricing */}
+                            {proposal.price_basic && (
+                                <div
+                                    className="relative block rounded-2xl border border-slate-200 bg-white p-6 hover:shadow-lg transition"
+                                    aria-label="Basic Pricing"
+                                >
+                                    <h3 className="text-lg font-semibold text-slate-900">Basic</h3>
+                                    <div className="mt-2 flex items-baseline gap-1">
+                                        <span className="text-4xl font-extrabold tracking-tight">
+                                            {proposal.price_basic}
+                                        </span>
+                                        <span className="text-sm text-slate-500">One time payment</span>
+                                    </div>
+                                    <ul className="mt-8 space-y-2 text-sm text-slate-700">
+                                        <li>• Exclusive for <strong>n8n</strong> and <strong>GHL</strong> development only</li>
+                                        <li>• Multiple projects accepted within a one-month timeframe</li>
+                                        <li>• Defined timelines per project (not daily new projects)</li>
+                                    </ul>
+                                </div>
+                            )}
+
+                            {/* Premium Pricing */}
+                            {proposal.price_premium && (
+                                <div
+                                    className="relative block rounded-2xl border border-[#8CE232] bg-gradient-to-br from-white to-[#8CE232]/10 p-6 price-highlight hover:shadow-lg transition"
+                                    aria-label="Premium Pricing"
+                                >
+                                    <h3 className="text-lg font-semibold text-slate-900">Premium</h3>
+                                    <div className="mt-2 flex items-baseline gap-1">
+                                        <span className="text-4xl font-extrabold tracking-tight">
+                                            {proposal.price_premium}
+                                        </span>
+                                        <span className="text-sm text-slate-500">One time payment</span>
+                                    </div>
+                                    <ul className="mt-4 space-y-2 text-sm text-slate-700">
+                                        <li>• Includes <strong>n8n</strong>, <strong>GHL</strong>, and full software development</li>
+                                        <li>• Advanced/stacked automations</li>
+                                        <li>• API & third-party integrations</li>
+                                        <li>• Web app or dashboard components</li>
+                                        <li>• Documentation & milestone demos</li>
+                                        <li>• Final price varies by scope</li>
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+
+                        <p className="mt-8 text-xs text-slate-500">
+                            Note: Complex software features, additional integrations, and compliance requirements may adjust the final
+                            estimate after discovery. Maintenance fees are not included.
+                        </p>
+                        <div className="mt-8 bg-[#8CE232] p-6">
+                            <p className="text-md text-center text-black">
+                                You can explore our portfolio on our website{" "}
+                                <span className="text-white">
+                                    <a href="https://www.reaiv.com/portfolio" target="_blank" rel="noopener noreferrer">
+                                        Click Here!
+                                    </a>
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            )}
+
             {/* Migration Process / Timeline Section */}
-            <section id="process" className="py-16 bg-white border-t border-b border-slate-200">
+            <section id="process" className="py-16">
                 <div className="max-w-7xl mx-auto px-6">
                     <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Migration & Delivery Process</h2>
                     <div className="mt-8 grid lg:grid-cols-5 gap-6">
@@ -193,7 +276,7 @@ export default function ProposalPage() {
             </section>
 
             {/* Timeline Section */}
-            <section id="timeline" className="py-16">
+            <section id="timeline" className="py-16 bg-white border-t border-b border-slate-200">
                 <div className="max-w-7xl mx-auto px-6">
                     <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Projected Timeline</h2>
                     <p className="mt-2 text-slate-600 text-sm">
