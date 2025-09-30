@@ -286,71 +286,59 @@ export default function CreateProposalPage() {
     return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
             <Toaster richColors position="top-center" />
-            <Card className="w-full max-w-4xl p-8 shadow-xl border border-slate-200 bg-white rounded-2xl">
-                <h2 className="text-4xl tracking-tighter font-bold mb-6 text-center text-slate-900">Create a New Proposal</h2>
-                <FormProvider {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                        {/* Formatted Proposal Title Preview */}
-                        <div className="mb-4 text-xl font-bold text-[#8CE232] text-center">
-                            Reaiv × {form.watch("client_name") || "{client_name}"} | {form.watch("title") || "{proposal_title}"}
-                        </div>
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Left: Form */}
+                <Card className="p-8 shadow-xl border border-slate-200 bg-white rounded-2xl">
+                    <h2 className="text-4xl tracking-tighter font-bold mb-6 text-center text-slate-900">Create a New Proposal</h2>
+                    <FormProvider {...form}>
+                        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                            {/* Formatted Proposal Title Preview */}
+                            <div className="mb-4 text-xl font-bold text-[#8CE232] text-center">
+                                Reaiv × {form.watch("client_name") || "{client_name}"} | {form.watch("title") || "{proposal_title}"}
+                            </div>
 
-                        {/* Title */}
-                        <FormItem>
+                            {/* Title */}
+                            <FormItem>
+                                <div className="flex items-center gap-1">
+                                    <FormLabel className="text-md">Proposal Title</FormLabel>
+                                    <span className="text-red-500 text-sm font-semibold">*</span>
+                                </div>
+                                <FormControl>
+                                    <Input
+                                        type="text"
+                                        {...form.register("title", { required: true })}
+                                        placeholder="Enter proposal title"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+
+                            {/* Client Name */}
+                            <FormItem>
+                                <div className="flex items-center gap-1">
+                                    <FormLabel className="text-md">Client Name</FormLabel>
+                                    <span className="text-red-500 text-sm font-semibold">*</span>
+                                </div>
+                                <FormControl>
+                                    <Input
+                                        type="text"
+                                        {...form.register("client_name", { required: true })}
+                                        placeholder="Enter client name"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
                             <div className="flex items-center gap-1">
-                                <FormLabel className="text-md">Proposal Title</FormLabel>
+                                <FormLabel className="text-md">Logo (Image)</FormLabel>
                                 <span className="text-red-500 text-sm font-semibold">*</span>
                             </div>
                             <FormControl>
-                                <Input
-                                    type="text"
-                                    {...form.register("title", { required: true })}
-                                    placeholder="Enter proposal title"
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-
-                        {/* Client Name */}
-                        <FormItem>
-                            <div className="flex items-center gap-1">
-                                <FormLabel className="text-md">Client Name</FormLabel>
-                                <span className="text-red-500 text-sm font-semibold">*</span>
-                            </div>
-                            <FormControl>
-                                <Input
-                                    type="text"
-                                    {...form.register("client_name", { required: true })}
-                                    placeholder="Enter client name"
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        <div className="flex items-center gap-1">
-                            <FormLabel className="text-md">Logo (Image)</FormLabel>
-                            <span className="text-red-500 text-sm font-semibold">*</span>
-                        </div>
-                        <FormControl>
-                            <div
-                                className="relative flex flex-col items-center justify-center border-2 border-dashed border-[#8CE232] rounded-lg bg-white/80 p-6 cursor-pointer transition hover:border-[#6bbf1c]"
-                                onDragOver={e => e.preventDefault()}
-                                onDrop={e => {
-                                    e.preventDefault();
-                                    const file = e.dataTransfer.files?.[0];
-                                    if (!file) return;
-                                    const reader = new FileReader();
-                                    reader.onload = () => {
-                                        const base64 = reader.result as string;
-                                        form.setValue("logo_base64", base64);
-                                    };
-                                    reader.readAsDataURL(file);
-                                }}
-                            >
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={async (e) => {
-                                        const file = e.target.files?.[0];
+                                <div
+                                    className="relative flex flex-col items-center justify-center border-2 border-dashed border-[#8CE232] rounded-lg bg-white/80 p-6 cursor-pointer transition hover:border-[#6bbf1c]"
+                                    onDragOver={e => e.preventDefault()}
+                                    onDrop={e => {
+                                        e.preventDefault();
+                                        const file = e.dataTransfer.files?.[0];
                                         if (!file) return;
                                         const reader = new FileReader();
                                         reader.onload = () => {
@@ -359,306 +347,158 @@ export default function CreateProposalPage() {
                                         };
                                         reader.readAsDataURL(file);
                                     }}
-                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                    style={{ height: "100%", width: "100%" }}
-                                />
-                                <div className="flex flex-col items-center justify-center pointer-events-none">
-                                    <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="#8CE232" strokeWidth="1.5" className="mb-2">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5V8a2 2 0 012-2h14a2 2 0 012 2v8.5M3 16.5l4.5-4.5a2 2 0 012.8 0l2.2 2.2a2 2 0 002.8 0l4.5-4.5M3 16.5V19a2 2 0 002 2h14a2 2 0 002-2v-2.5" />
-                                    </svg>
-                                    <span className="text-[#8CE232] font-semibold">Browse or Drag & Drop</span>
-                                    <span className="text-xs text-slate-500 mt-1">PNG, JPG, JPEG, SVG up to 2MB</span>
-                                </div>
-                            </div>
-                        </FormControl>
-                        <FormMessage />
-                        {/* Preview */}
-                        {form.watch("logo_base64") && (
-                            <div className="mt-4 flex flex-col items-center">
-                                <img
-                                    src={form.watch("logo_base64")}
-                                    alt="Logo Preview"
-                                    className="max-h-32 rounded-lg border border-slate-200 shadow"
-                                />
-                                <span className="text-xs text-slate-500 mt-2">Logo Preview</span>
-                                <Button
-                                    type="button"
-                                    onClick={() => form.setValue("logo_base64", "")}
-                                    variant="outline"
-                                    size="sm"
-                                    className="mt-2 text-red-500 border-red-300 hover:bg-red-50"
                                 >
-                                    Remove Image
-                                </Button>
-                            </div>
-                        )}
-
-                        <Card className="p-6 border border-slate-300 rounded-xl bg-white mb-8">
-                            <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Hero Section</h3>
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <FormItem>
-                                    <FormLabel>Headline</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="text"
-                                            {...form.register("hero.headline")}
-                                            placeholder="Hero headline"
-                                            className="bg-white/80"
-                                        />
-                                    </FormControl>
-                                </FormItem>
-                                <FormItem>
-                                    <FormLabel>Subtitle</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="text"
-                                            {...form.register("hero.subtitle")}
-                                            placeholder="Hero subtitle"
-                                            className="bg-white/80"
-                                        />
-                                    </FormControl>
-                                </FormItem>
-                            </div>
-                            <div className="mt-6">
-                                <FormLabel className="mb-2 block">Add Highlight</FormLabel>
-                                <div className="grid md:grid-cols-2 gap-4 mb-4">
-                                    <FormItem>
-                                        <FormLabel>Title</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="text"
-                                                value={newHighlight.title}
-                                                onChange={e => setNewHighlight(h => ({ ...h, title: e.target.value }))}
-                                                placeholder="Highlight title"
-                                                className="bg-white/80"
-                                                disabled={highlights.length >= 3}
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                    <FormItem>
-                                        <FormLabel>Description</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="text"
-                                                value={newHighlight.desc}
-                                                onChange={e => setNewHighlight(h => ({ ...h, desc: e.target.value }))}
-                                                placeholder="Highlight description"
-                                                className="bg-white/80"
-                                                disabled={highlights.length >= 3}
-                                            />
-                                        </FormControl>
-                                    </FormItem>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            const reader = new FileReader();
+                                            reader.onload = () => {
+                                                const base64 = reader.result as string;
+                                                form.setValue("logo_base64", base64);
+                                            };
+                                            reader.readAsDataURL(file);
+                                        }}
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                        style={{ height: "100%", width: "100%" }}
+                                    />
+                                    <div className="flex flex-col items-center justify-center pointer-events-none">
+                                        <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="#8CE232" strokeWidth="1.5" className="mb-2">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5V8a2 2 0 012-2h14a2 2 0 012 2v8.5M3 16.5l4.5-4.5a2 2 0 012.8 0l2.2 2.2a2 2 0 002.8 0l4.5-4.5M3 16.5V19a2 2 0 002 2h14a2 2 0 002-2v-2.5" />
+                                        </svg>
+                                        <span className="text-[#8CE232] font-semibold">Browse or Drag & Drop</span>
+                                        <span className="text-xs text-slate-500 mt-1">PNG, JPG, JPEG, SVG up to 2MB</span>
+                                    </div>
                                 </div>
-                                <div className="text-right">
-                                    <Button
-                                        type="button"
-                                        onClick={handleAddHighlight}
-                                        className="bg-[#8CE232] text-black px-6 py-2 rounded-lg hover:bg-[#8CE232]/90 transition-colors"
-                                        disabled={highlights.length >= 3}
-                                    >
-                                        Add Highlight
-                                    </Button>
-                                </div>
-                                {highlights.length >= 3 && (
-                                    <div className="text-xs text-red-500 mt-2">Maximum of 3 highlights allowed.</div>
-                                )}
-                            </div>
-
-                            {/* Highlights Table */}
-                            <div className="mt-8">
-                                <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Highlights Added</h3>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="w-12 text-center">No.</TableHead>
-                                            <TableHead>Title</TableHead>
-                                            <TableHead>Description</TableHead>
-                                            <TableHead className="text-center">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {highlights.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell colSpan={4} className="text-center text-slate-500 py-8">
-                                                    No highlights added.
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : (
-                                            highlights.map((h, idx) => (
-                                                <TableRow key={idx}>
-                                                    <TableCell className="text-center font-semibold">{idx + 1}</TableCell>
-                                                    <TableCell>{typeof h === "string" ? h : h.title}</TableCell>
-                                                    <TableCell>{typeof h === "string" ? "" : h.desc}</TableCell>
-                                                    <TableCell className="text-center">
-                                                        <Button
-                                                            type="button"
-                                                            onClick={() => handleRemoveHighlight(idx)}
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="text-red-500 hover:bg-red-100"
-                                                            aria-label="Delete Highlight"
-                                                        >
-                                                            <Trash2 size={20} />
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </Card>
-
-                        {/* Overview */}
-                        <FormItem>
-                            <div className="flex items-center gap-1">
-                                <FormLabel className="text-md">Overview</FormLabel>
-                                <span className="text-red-500 text-sm font-semibold">*</span>
-                            </div>
-                            <FormControl>
-                                <Textarea
-                                    {...form.register("overview", { required: true })}
-                                    placeholder="Write a brief overview of the proposal"
-                                />
                             </FormControl>
                             <FormMessage />
-                        </FormItem>
-
-                        {/* New Solution Card */}
-                        <div className="mb-8">
-                            <Card className="p-6 border border-slate-300 rounded-xl bg-white">
-                                <div className="flex items-center gap-1">
-                                    <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Add Solution</h3>
-                                </div>
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    <FormItem>
-                                        <FormLabel>Title</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="text"
-                                                value={newSolution.title}
-                                                onChange={e => handleNewSolutionChange("title", e.target.value)}
-                                                placeholder="Solution title"
-                                                className="bg-white/80"
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                    <FormItem>
-                                        <FormLabel>Benefit</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="text"
-                                                value={newSolution.benefit}
-                                                onChange={e => handleNewSolutionChange("benefit", e.target.value)}
-                                                placeholder="Benefit (optional)"
-                                                className="bg-white/80"
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                </div>
-                                <FormItem className="mt-4">
-                                    <FormLabel>Description</FormLabel>
-                                    <FormControl>
-                                        <Textarea
-                                            value={newSolution.description}
-                                            onChange={e => handleNewSolutionChange("description", e.target.value)}
-                                            placeholder="Describe the solution"
-                                            className="bg-white/80"
-                                        />
-                                    </FormControl>
-                                </FormItem>
-                                <FormItem className="mt-4">
-                                    <FormLabel>Bullets</FormLabel>
-                                    <div className="space-y-2">
-                                        {newSolution.bullets.map((bullet, bIdx) => (
-                                            <div key={bIdx} className="flex gap-2 items-center">
-                                                <Input
-                                                    type="text"
-                                                    value={bullet}
-                                                    onChange={e => handleNewBulletChange(bIdx, e.target.value)}
-                                                    placeholder={`Bullet ${bIdx + 1}`}
-                                                    className="bg-white/80"
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    onClick={() => removeNewBullet(bIdx)}
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-red-400 hover:bg-red-100"
-                                                    disabled={newSolution.bullets.length === 1}
-                                                    aria-label="Remove Bullet"
-                                                >
-                                                    <MinusCircle size={18} />
-                                                </Button>
-                                            </div>
-                                        ))}
-                                        <Button
-                                            type="button"
-                                            onClick={addNewBullet}
-                                            variant="outline"
-                                            size="sm"
-                                            className="mt-2 flex gap-1 items-center bg-[#eaffd0] text-[#8CE232] border-[#8CE232] hover:bg-[#8CE232]/10"
-                                        >
-                                            <Plus size={16} />
-                                            Add Bullet
-                                        </Button>
-                                    </div>
-                                </FormItem>
-                                <div className="mt-6 text-right">
+                            {/* Preview */}
+                            {form.watch("logo_base64") && (
+                                <div className="mt-4 flex flex-col items-center">
+                                    <img
+                                        src={form.watch("logo_base64")}
+                                        alt="Logo Preview"
+                                        className="max-h-32 rounded-lg border border-slate-200 shadow"
+                                    />
+                                    <span className="text-xs text-slate-500 mt-2">Logo Preview</span>
                                     <Button
                                         type="button"
-                                        onClick={handleAddSolution}
-                                        className="bg-[#8CE232] text-black px-6 py-2 rounded-lg hover:bg-[#8CE232]/90 transition-colors"
+                                        onClick={() => form.setValue("logo_base64", "")}
+                                        variant="outline"
+                                        size="sm"
+                                        className="mt-2 text-red-500 border-red-300 hover:bg-red-50"
                                     >
-                                        Add Solution
+                                        Remove Image
                                     </Button>
                                 </div>
+                            )}
 
-                                <Separator className="my-4" />
+                            <Card className="p-6 border border-slate-300 rounded-xl bg-white mb-8">
+                                <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Hero Section</h3>
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <FormItem>
+                                        <FormLabel>Headline</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="text"
+                                                {...form.register("hero.headline")}
+                                                placeholder="Hero headline"
+                                                className="bg-white/80"
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                    <FormItem>
+                                        <FormLabel>Subtitle</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="text"
+                                                {...form.register("hero.subtitle")}
+                                                placeholder="Hero subtitle"
+                                                className="bg-white/80"
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                </div>
+                                <div className="mt-6">
+                                    <FormLabel className="mb-2 block">Add Highlight</FormLabel>
+                                    <div className="grid md:grid-cols-2 gap-4 mb-4">
+                                        <FormItem>
+                                            <FormLabel>Title</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="text"
+                                                    value={newHighlight.title}
+                                                    onChange={e => setNewHighlight(h => ({ ...h, title: e.target.value }))}
+                                                    placeholder="Highlight title"
+                                                    className="bg-white/80"
+                                                    disabled={highlights.length >= 3}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                        <FormItem>
+                                            <FormLabel>Description</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="text"
+                                                    value={newHighlight.desc}
+                                                    onChange={e => setNewHighlight(h => ({ ...h, desc: e.target.value }))}
+                                                    placeholder="Highlight description"
+                                                    className="bg-white/80"
+                                                    disabled={highlights.length >= 3}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    </div>
+                                    <div className="text-right">
+                                        <Button
+                                            type="button"
+                                            onClick={handleAddHighlight}
+                                            className="bg-[#8CE232] text-black px-6 py-2 rounded-lg hover:bg-[#8CE232]/90 transition-colors"
+                                            disabled={highlights.length >= 3}
+                                        >
+                                            Add Highlight
+                                        </Button>
+                                    </div>
+                                    {highlights.length >= 3 && (
+                                        <div className="text-xs text-red-500 mt-2">Maximum of 3 highlights allowed.</div>
+                                    )}
+                                </div>
 
-                                {/* Solutions Table */}
-                                <div>
-                                    <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Solutions Added</h3>
+                                {/* Highlights Table */}
+                                <div className="mt-8">
+                                    <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Highlights Added</h3>
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead className="w-12 text-center">No.</TableHead>
                                                 <TableHead>Title</TableHead>
                                                 <TableHead>Description</TableHead>
-                                                <TableHead>Benefit</TableHead>
-                                                <TableHead>Bullets</TableHead>
                                                 <TableHead className="text-center">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {solutions.length === 0 ? (
+                                            {highlights.length === 0 ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={6} className="text-center text-slate-500 py-8">
-                                                        No solutions created.
+                                                    <TableCell colSpan={4} className="text-center text-slate-500 py-8">
+                                                        No highlights added.
                                                     </TableCell>
                                                 </TableRow>
                                             ) : (
-                                                solutions.map((sol, idx) => (
+                                                highlights.map((h, idx) => (
                                                     <TableRow key={idx}>
                                                         <TableCell className="text-center font-semibold">{idx + 1}</TableCell>
-                                                        <TableCell>{sol.title}</TableCell>
-                                                        <TableCell>{sol.description}</TableCell>
-                                                        <TableCell>{sol.benefit}</TableCell>
-                                                        <TableCell>
-                                                            <ul className="list-disc pl-4">
-                                                                {sol.bullets.map((b, bIdx) => (
-                                                                    <li key={bIdx}>{b}</li>
-                                                                ))}
-                                                            </ul>
-                                                        </TableCell>
+                                                        <TableCell>{typeof h === "string" ? h : h.title}</TableCell>
+                                                        <TableCell>{typeof h === "string" ? "" : h.desc}</TableCell>
                                                         <TableCell className="text-center">
                                                             <Button
                                                                 type="button"
-                                                                onClick={() => removeSolution(idx)}
+                                                                onClick={() => handleRemoveHighlight(idx)}
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 className="text-red-500 hover:bg-red-100"
-                                                                aria-label="Delete Solution"
+                                                                aria-label="Delete Highlight"
                                                             >
                                                                 <Trash2 size={20} />
                                                             </Button>
@@ -670,187 +510,583 @@ export default function CreateProposalPage() {
                                     </Table>
                                 </div>
                             </Card>
-                        </div>
 
-                        <Separator className="my-8" />
+                            {/* Overview */}
+                            <FormItem>
+                                <div className="flex items-center gap-1">
+                                    <FormLabel className="text-md">Overview</FormLabel>
+                                    <span className="text-red-500 text-sm font-semibold">*</span>
+                                </div>
+                                <FormControl>
+                                    <Textarea
+                                        {...form.register("overview", { required: true })}
+                                        placeholder="Write a brief overview of the proposal"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
 
-                        {/* Migration Process */}
-                        <div className="mb-8">
-                            <div className="flex items-center gap-1">
-                                <FormLabel className="mb-2 block text-lg">Migration Process</FormLabel>
-                                <span className="text-red-500 text-sm font-semibold">*</span>
-                            </div>
-                            {[...Array(5)].map((_, idx) => (
-                                <Fragment key={idx}>
-                                    <div className="grid md:grid-cols-2 gap-4 mb-4">
+                            {/* New Solution Card */}
+                            <div className="mb-8">
+                                <Card className="p-6 border border-slate-300 rounded-xl bg-white">
+                                    <div className="flex items-center gap-1">
+                                        <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Add Solution</h3>
+                                    </div>
+                                    <div className="grid md:grid-cols-2 gap-4">
                                         <FormItem>
-                                            <FormLabel>Step {idx + 1} Name</FormLabel>
+                                            <FormLabel>Title</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="text"
-                                                    {...form.register(`migration_process.${idx}.step`)}
-                                                    placeholder={`Step ${idx + 1} name`}
+                                                    value={newSolution.title}
+                                                    onChange={e => handleNewSolutionChange("title", e.target.value)}
+                                                    placeholder="Solution title"
                                                     className="bg-white/80"
                                                 />
                                             </FormControl>
                                         </FormItem>
                                         <FormItem>
-                                            <FormLabel>Step {idx + 1} Description</FormLabel>
+                                            <FormLabel>Benefit</FormLabel>
                                             <FormControl>
-                                                <Textarea
-                                                    {...form.register(`migration_process.${idx}.description`)}
-                                                    placeholder={`Describe step ${idx + 1}`}
+                                                <Input
+                                                    type="text"
+                                                    value={newSolution.benefit}
+                                                    onChange={e => handleNewSolutionChange("benefit", e.target.value)}
+                                                    placeholder="Benefit (optional)"
                                                     className="bg-white/80"
                                                 />
                                             </FormControl>
                                         </FormItem>
                                     </div>
-                                    {idx < 4 && <Separator className="my-2" />}
-                                </Fragment>
-                            ))}
-                        </div>
-
-                        {/* Timelines */}
-                        {solutions.length > 0 ? (
-                            <div className="mb-8">
-                                <FormLabel className="mb-2 block text-md">Timelines</FormLabel>
-                                {timelines.map((timeline, timelineIdx) => (
-                                    <Card key={timelineIdx} className="p-4 mb-8 border border-slate-200 rounded-xl bg-white/80">
-                                        <div className="mb-2 font-bold text-[#8CE232]">{timeline.title || `Timeline ${timelineIdx + 1}`}</div>
-                                        {timeline.steps.map((step, stepIdx) => (
-                                            <div key={stepIdx} className="grid md:grid-cols-2 gap-4 mb-2 items-center">
-                                                <FormItem>
-                                                    <FormLabel>Step Name</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            type="text"
-                                                            value={step.label}
-                                                            onChange={e => {
-                                                                const newTimelines = [...timelines];
-                                                                newTimelines[timelineIdx].steps[stepIdx].label = e.target.value;
-                                                                setTimelines(newTimelines);
-                                                                form.setValue("timelines", newTimelines);
-                                                            }}
-                                                            placeholder="Timeline step name"
-                                                            className="bg-white"
-                                                        />
-                                                    </FormControl>
-                                                </FormItem>
-                                                <div className="flex items-center gap-2">
-                                                    <FormItem className="flex-1">
-                                                        <FormLabel>Step Description</FormLabel>
-                                                        <FormControl>
-                                                            <Textarea
-                                                                value={step.desc}
-                                                                onChange={e => {
-                                                                    const newTimelines = [...timelines];
-                                                                    newTimelines[timelineIdx].steps[stepIdx].desc = e.target.value;
-                                                                    setTimelines(newTimelines);
-                                                                    form.setValue("timelines", newTimelines);
-                                                                }}
-                                                                placeholder="Add timeline details"
-                                                                className="bg-white"
-                                                            />
-                                                        </FormControl>
-                                                    </FormItem>
+                                    <FormItem className="mt-4">
+                                        <FormLabel>Description</FormLabel>
+                                        <FormControl>
+                                            <Textarea
+                                                value={newSolution.description}
+                                                onChange={e => handleNewSolutionChange("description", e.target.value)}
+                                                placeholder="Describe the solution"
+                                                className="bg-white/80"
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                    <FormItem className="mt-4">
+                                        <FormLabel>Bullets</FormLabel>
+                                        <div className="space-y-2">
+                                            {newSolution.bullets.map((bullet, bIdx) => (
+                                                <div key={bIdx} className="flex gap-2 items-center">
+                                                    <Input
+                                                        type="text"
+                                                        value={bullet}
+                                                        onChange={e => handleNewBulletChange(bIdx, e.target.value)}
+                                                        placeholder={`Bullet ${bIdx + 1}`}
+                                                        className="bg-white/80"
+                                                    />
                                                     <Button
                                                         type="button"
+                                                        onClick={() => removeNewBullet(bIdx)}
                                                         variant="ghost"
                                                         size="icon"
                                                         className="text-red-400 hover:bg-red-100"
-                                                        disabled={timeline.steps.length === 1}
-                                                        onClick={() => {
-                                                            const newTimelines = [...timelines];
-                                                            newTimelines[timelineIdx].steps = newTimelines[timelineIdx].steps.filter((_, i) => i !== stepIdx);
-                                                            setTimelines(newTimelines);
-                                                            form.setValue("timelines", newTimelines);
-                                                        }}
-                                                        aria-label="Remove Step"
+                                                        disabled={newSolution.bullets.length === 1}
+                                                        aria-label="Remove Bullet"
                                                     >
                                                         <MinusCircle size={18} />
                                                     </Button>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                            <Button
+                                                type="button"
+                                                onClick={addNewBullet}
+                                                variant="outline"
+                                                size="sm"
+                                                className="mt-2 flex gap-1 items-center bg-[#eaffd0] text-[#8CE232] border-[#8CE232] hover:bg-[#8CE232]/10"
+                                            >
+                                                <Plus size={16} />
+                                                Add Bullet
+                                            </Button>
+                                        </div>
+                                    </FormItem>
+                                    <div className="mt-6 text-right">
                                         <Button
                                             type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            className="mt-2 flex gap-1 items-center bg-[#eaffd0] text-[#8CE232] border-[#8CE232] hover:bg-[#8CE232]/10"
-                                            onClick={() => {
-                                                const newTimelines = [...timelines];
-                                                newTimelines[timelineIdx].steps.push({ label: "", desc: "" });
-                                                setTimelines(newTimelines);
-                                                form.setValue("timelines", newTimelines);
-                                            }}
+                                            onClick={handleAddSolution}
+                                            className="bg-[#8CE232] text-black px-6 py-2 rounded-lg hover:bg-[#8CE232]/90 transition-colors"
                                         >
-                                            <Plus size={16} />
-                                            Add Step
+                                            Add Solution
                                         </Button>
-                                    </Card>
+                                    </div>
+
+                                    <Separator className="my-4" />
+
+                                    {/* Solutions Table */}
+                                    <div>
+                                        <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Solutions Added</h3>
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead className="w-12 text-center">No.</TableHead>
+                                                    <TableHead>Title</TableHead>
+                                                    <TableHead>Description</TableHead>
+                                                    <TableHead>Benefit</TableHead>
+                                                    <TableHead>Bullets</TableHead>
+                                                    <TableHead className="text-center">Actions</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {solutions.length === 0 ? (
+                                                    <TableRow>
+                                                        <TableCell colSpan={6} className="text-center text-slate-500 py-8">
+                                                            No solutions created.
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ) : (
+                                                    solutions.map((sol, idx) => (
+                                                        <TableRow key={idx}>
+                                                            <TableCell className="text-center font-semibold">{idx + 1}</TableCell>
+                                                            <TableCell>{sol.title}</TableCell>
+                                                            <TableCell>{sol.description}</TableCell>
+                                                            <TableCell>{sol.benefit}</TableCell>
+                                                            <TableCell>
+                                                                <ul className="list-disc pl-4">
+                                                                    {sol.bullets.map((b, bIdx) => (
+                                                                        <li key={bIdx}>{b}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </TableCell>
+                                                            <TableCell className="text-center">
+                                                                <Button
+                                                                    type="button"
+                                                                    onClick={() => removeSolution(idx)}
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="text-red-500 hover:bg-red-100"
+                                                                    aria-label="Delete Solution"
+                                                                >
+                                                                    <Trash2 size={20} />
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </Card>
+                            </div>
+
+                            <Separator className="my-8" />
+
+                            {/* Migration Process */}
+                            <div className="mb-8">
+                                <div className="flex items-center gap-1">
+                                    <FormLabel className="mb-2 block text-lg">Migration Process</FormLabel>
+                                    <span className="text-red-500 text-sm font-semibold">*</span>
+                                </div>
+                                {[...Array(5)].map((_, idx) => (
+                                    <Fragment key={idx}>
+                                        <div className="grid md:grid-cols-2 gap-4 mb-4">
+                                            <FormItem>
+                                                <FormLabel>Step {idx + 1} Name</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="text"
+                                                        {...form.register(`migration_process.${idx}.step`)}
+                                                        placeholder={`Step ${idx + 1} name`}
+                                                        className="bg-white/80"
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                            <FormItem>
+                                                <FormLabel>Step {idx + 1} Description</FormLabel>
+                                                <FormControl>
+                                                    <Textarea
+                                                        {...form.register(`migration_process.${idx}.description`)}
+                                                        placeholder={`Describe step ${idx + 1}`}
+                                                        className="bg-white/80"
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        </div>
+                                        {idx < 4 && <Separator className="my-2" />}
+                                    </Fragment>
                                 ))}
                             </div>
-                        ) : (
-                            <>
-                                <FormLabel className="mb-2 block">Timelines</FormLabel>
-                                <div className="mb-8 text-center text-slate-500">
-                                    No timelines available. Please add a solution first.
+
+                            {/* Timelines */}
+                            {solutions.length > 0 ? (
+                                <div className="mb-8">
+                                    <FormLabel className="mb-2 block text-md">Timelines</FormLabel>
+                                    {timelines.map((timeline, timelineIdx) => (
+                                        <Card key={timelineIdx} className="p-4 mb-8 border border-slate-200 rounded-xl bg-white/80">
+                                            <div className="mb-2 font-bold text-[#8CE232]">{timeline.title || `Timeline ${timelineIdx + 1}`}</div>
+                                            {timeline.steps.map((step, stepIdx) => (
+                                                <div key={stepIdx} className="grid md:grid-cols-2 gap-4 mb-2 items-center">
+                                                    <FormItem>
+                                                        <FormLabel>Step Name</FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                type="text"
+                                                                value={step.label}
+                                                                onChange={e => {
+                                                                    const newTimelines = [...timelines];
+                                                                    newTimelines[timelineIdx].steps[stepIdx].label = e.target.value;
+                                                                    setTimelines(newTimelines);
+                                                                    form.setValue("timelines", newTimelines);
+                                                                }}
+                                                                placeholder="Timeline step name"
+                                                                className="bg-white"
+                                                            />
+                                                        </FormControl>
+                                                    </FormItem>
+                                                    <div className="flex items-center gap-2">
+                                                        <FormItem className="flex-1">
+                                                            <FormLabel>Step Description</FormLabel>
+                                                            <FormControl>
+                                                                <Textarea
+                                                                    value={step.desc}
+                                                                    onChange={e => {
+                                                                        const newTimelines = [...timelines];
+                                                                        newTimelines[timelineIdx].steps[stepIdx].desc = e.target.value;
+                                                                        setTimelines(newTimelines);
+                                                                        form.setValue("timelines", newTimelines);
+                                                                    }}
+                                                                    placeholder="Add timeline details"
+                                                                    className="bg-white"
+                                                                />
+                                                            </FormControl>
+                                                        </FormItem>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="text-red-400 hover:bg-red-100"
+                                                            disabled={timeline.steps.length === 1}
+                                                            onClick={() => {
+                                                                const newTimelines = [...timelines];
+                                                                newTimelines[timelineIdx].steps = newTimelines[timelineIdx].steps.filter((_, i) => i !== stepIdx);
+                                                                setTimelines(newTimelines);
+                                                                form.setValue("timelines", newTimelines);
+                                                            }}
+                                                            aria-label="Remove Step"
+                                                        >
+                                                            <MinusCircle size={18} />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="mt-2 flex gap-1 items-center bg-[#eaffd0] text-[#8CE232] border-[#8CE232] hover:bg-[#8CE232]/10"
+                                                onClick={() => {
+                                                    const newTimelines = [...timelines];
+                                                    newTimelines[timelineIdx].steps.push({ label: "", desc: "" });
+                                                    setTimelines(newTimelines);
+                                                    form.setValue("timelines", newTimelines);
+                                                }}
+                                            >
+                                                <Plus size={16} />
+                                                Add Step
+                                            </Button>
+                                        </Card>
+                                    ))}
                                 </div>
-                            </>
-                        )}
+                            ) : (
+                                <>
+                                    <FormLabel className="mb-2 block">Timelines</FormLabel>
+                                    <div className="mb-8 text-center text-slate-500">
+                                        No timelines available. Please add a solution first.
+                                    </div>
+                                </>
+                            )}
 
-                        {/* Toggle Price Section */}
-                        <div className="mb-8 flex items-center gap-4">
-                            <Switch
-                                checked={showPrice}
-                                onCheckedChange={setShowPrice}
-                                id="toggle-price"
-                            />
-                            <FormLabel htmlFor="toggle-price" className="text-md font-semibold">
-                                Include Pricing in Proposal
-                            </FormLabel>
-                        </div>
-
-                        {/* Pricing Inputs */}
-                        {showPrice && (
-                            <div className="mb-8 grid md:grid-cols-2 gap-4">
-                                <FormItem>
-                                    <FormLabel>Basic Payment</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="text"
-                                            {...form.register("price_basic")}
-                                            placeholder="e.g. ₱15,000"
-                                            className="bg-white/80"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                <FormItem>
-                                    <FormLabel>Premium Payment</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="text"
-                                            {...form.register("price_premium")}
-                                            placeholder="e.g. ₱20,000"
-                                            className="bg-white/80"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
+                            {/* Toggle Price Section */}
+                            <div className="mb-8 flex items-center gap-4">
+                                <Switch
+                                    checked={showPrice}
+                                    onCheckedChange={setShowPrice}
+                                    id="toggle-price"
+                                />
+                                <FormLabel htmlFor="toggle-price" className="text-md font-semibold">
+                                    Include Pricing in Proposal
+                                </FormLabel>
                             </div>
-                        )}
 
-                        {/* Submit Button */}
-                        <Button
-                            type="submit"
-                            className="w-full bg-[#8CE232] text-black font-bold py-6 rounded-lg hover:bg-[#8CE232]/90 transition-colors"
-                        >
-                            Create Proposal
-                        </Button>
-                    </form>
-                </FormProvider>
-            </Card>
+                            {/* Pricing Inputs */}
+                            {showPrice && (
+                                <div className="mb-8 grid md:grid-cols-2 gap-4">
+                                    <FormItem>
+                                        <FormLabel>Basic Payment</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="text"
+                                                {...form.register("price_basic")}
+                                                placeholder="e.g. ₱15,000"
+                                                className="bg-white/80"
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    <FormItem>
+                                        <FormLabel>Premium Payment</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="text"
+                                                {...form.register("price_premium")}
+                                                placeholder="e.g. ₱20,000"
+                                                className="bg-white/80"
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                </div>
+                            )}
+
+                            {/* Submit Button */}
+                            <Button
+                                type="submit"
+                                className="w-full bg-[#8CE232] text-black font-bold py-6 rounded-lg hover:bg-[#8CE232]/90 transition-colors"
+                            >
+                                Create Proposal
+                            </Button>
+                        </form>
+                    </FormProvider>
+                </Card>
+
+                {/* Right: Live Preview */}
+                <div className="bg-slate-50 text-slate-800 font-sans rounded-2xl border border-slate-200 shadow-xl p-0 overflow-y-auto">
+                    {/* Banner */}
+                    <div className="bg-black px-8 py-3 flex items-center justify-between sticky top-0 z-10">
+                        <div className="flex items-center gap-4">
+                            <img
+                                src="/resources/images/reaiv-logo.png"
+                                alt="Reaiv logo"
+                                width={192}
+                                height={48}
+                                className="h-12 w-auto"
+                            />
+                            <span className="text-md md:text-xl font-bold ml-[-10px] text-white">x</span>
+                            {form.watch("logo_base64") ? (
+                                <img src={form.watch("logo_base64")} alt="Proposal Logo" className="h-9 w-auto" />
+                            ) : (
+                                <span className="text-slate-400">No logo</span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Hero Section */}
+                    <section id="top" className="relative overflow-hidden py-[70px]">
+                        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#8CE232]/20 via-white to-emerald-50"></div>
+                        <div className="max-w-5xl mx-auto px-6 py-20 text-center">
+                            <div className="flex flex-col items-center justify-center mb-8">
+                                <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
+                                    <span className="text-[#8CE232]">Reaiv</span> x {form.watch("client_name")}
+                                </h2>
+                            </div>
+                            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900">
+                                {form.watch("hero.headline")}
+                            </h1>
+                            <p className="mt-4 text-slate-600 text-lg leading-relaxed max-w-3xl mx-auto">
+                                {form.watch("hero.subtitle")}
+                            </p>
+                            <ul className="mt-8 flex flex-wrap justify-center gap-6 sm:gap-8 md:gap-16 text-sm">
+                                {(form.watch("hero.highlights") || []).map((h: any, idx: number) => {
+                                    if (typeof h === "string") {
+                                        return (
+                                            <li key={h + idx} className="bg-white rounded-xl p-4 border border-slate-200 w-[15rem] h-auto">
+                                                <span className="block text-2xl font-bold">{h}</span>
+                                            </li>
+                                        );
+                                    } else {
+                                        return (
+                                            <li key={h.title + idx} className="bg-white rounded-xl p-4 border border-slate-200 w-[15rem] h-auto">
+                                                <span className="block text-2xl font-bold">{h.title}</span>
+                                                <span className="block mt-2 text-slate-600">{h.desc}</span>
+                                            </li>
+                                        );
+                                    }
+                                })}
+                            </ul>
+                        </div>
+                    </section>
+
+                    {/* Overview Section */}
+                    <section id="overview" className="py-16 bg-white border-t border-b border-slate-200">
+                        <div className="max-w-5xl mx-auto px-6 text-center">
+                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Overview</h2>
+                            <p className="mt-4 text-slate-600 leading-relaxed max-w-3xl mx-auto">
+                                {form.watch("overview")}
+                            </p>
+                            {form.watch("overview_details.title")?.trim() && form.watch("overview_details.description")?.trim() && (
+                                <div className="mt-8 text-left bg-slate-50 border border-slate-200 rounded-xl p-5">
+                                    <h3 className="font-semibold">{form.watch("overview_details.title")}</h3>
+                                    <p className="mt-2 text-sm text-slate-600">
+                                        {form.watch("overview_details.description")}
+                                    </p>
+                                    {form.watch("overview_details.items")?.length > 0 && (
+                                        <ul className="mt-2 text-sm text-slate-700 space-y-1 list-disc pl-4">
+                                            {form.watch("overview_details.items").map((item: any, idx: number) => (
+                                                <li key={idx}>
+                                                    <strong>{item.label}:</strong> {item.text}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* Proposed Solutions Section */}
+                    <section id="services" className="py-16">
+                        <div className="max-w-7xl mx-auto px-6">
+                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
+                                Proposed Solutions
+                            </h2>
+                            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {(form.watch("solutions") || []).map((card: any, idx: number) => (
+                                    <div key={idx} className="card rounded-2xl border border-[#8CE232] bg-white p-6 hover:scale-[1.01] transition-transform">
+                                        <h3 className="text-lg font-semibold">{card.title}</h3>
+                                        <p className="mt-2 text-sm text-slate-600">{card.description}</p>
+                                        <ul className="mt-4 text-sm text-slate-700 space-y-1 list-disc pl-4">
+                                            {card.bullets.map((b: string, i: number) => (
+                                                <li key={i}>{b}</li>
+                                            ))}
+                                        </ul>
+                                        {card.benefit && (
+                                            <p className="mt-4 text-xs text-slate-500"><strong>Benefit:</strong> {card.benefit}</p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Pricing Section */}
+                    {(form.watch("price_basic") || form.watch("price_premium")) && (
+                        <section id="pricing" className="py-20 bg-white border-t border-b border-slate-200">
+                            <div className="max-w-7xl mx-auto px-6">
+                                <div className="flex items-end justify-between flex-wrap gap-4">
+                                    <div>
+                                        <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Pricing</h2>
+                                        <p className="mt-2 text-slate-600">
+                                            Simple, transparent tiers. Pick what fits today—scale when you need more.
+                                        </p>
+                                    </div>
+                                    <span className="text-xs text-slate-500">
+                                        PHP pricing • Taxes, 3rd-party fees not included
+                                    </span>
+                                </div>
+                                <div className="mt-8 grid md:grid-cols-2 gap-6">
+                                    {form.watch("price_basic") && (
+                                        <div
+                                            className="relative block rounded-2xl border border-slate-200 bg-white p-6 hover:shadow-lg transition"
+                                            aria-label="Basic Pricing"
+                                        >
+                                            <h3 className="text-lg font-semibold text-slate-900">Basic</h3>
+                                            <div className="mt-2 flex items-baseline gap-1">
+                                                <span className="text-4xl font-extrabold tracking-tight">
+                                                    {form.watch("price_basic")}
+                                                </span>
+                                                <span className="text-sm text-slate-500">One time payment</span>
+                                            </div>
+                                            <ul className="mt-8 space-y-2 text-sm text-slate-700">
+                                                <li>• Exclusive for <strong>n8n</strong> and <strong>GHL</strong> development only</li>
+                                                <li>• Multiple projects accepted within a one-month timeframe</li>
+                                                <li>• Defined timelines per project (not daily new projects)</li>
+                                            </ul>
+                                        </div>
+                                    )}
+                                    {form.watch("price_premium") && (
+                                        <div
+                                            className="relative block rounded-2xl border border-[#8CE232] bg-gradient-to-br from-white to-[#8CE232]/10 p-6 price-highlight hover:shadow-lg transition"
+                                            aria-label="Premium Pricing"
+                                        >
+                                            <h3 className="text-lg font-semibold text-slate-900">Premium</h3>
+                                            <div className="mt-2 flex items-baseline gap-1">
+                                                <span className="text-4xl font-extrabold tracking-tight">
+                                                    {form.watch("price_premium")}
+                                                </span>
+                                                <span className="text-sm text-slate-500">One time payment</span>
+                                            </div>
+                                            <ul className="mt-4 space-y-2 text-sm text-slate-700">
+                                                <li>• Includes <strong>n8n</strong>, <strong>GHL</strong>, and full software development</li>
+                                                <li>• Advanced/stacked automations</li>
+                                                <li>• API & third-party integrations</li>
+                                                <li>• Web app or dashboard components</li>
+                                                <li>• Documentation & milestone demos</li>
+                                                <li>• Final price varies by scope</li>
+                                            </ul>
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="mt-8 text-xs text-slate-500">
+                                    Note: Complex software features, additional integrations, and compliance requirements may adjust the final
+                                    estimate after discovery. Maintenance fees are not included.
+                                </p>
+                                <div className="mt-8 bg-[#8CE232] p-6">
+                                    <p className="text-md text-center text-black">
+                                        You can explore our portfolio on our website{" "}
+                                        <span className="text-white">
+                                            <a href="https://www.reaiv.com/portfolio" target="_blank" rel="noopener noreferrer">
+                                                Click Here!
+                                            </a>
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Migration Process Section */}
+                    <section id="process" className="py-16">
+                        <div className="max-w-7xl mx-auto px-6">
+                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Migration & Delivery Process</h2>
+                            <div className="mt-8 grid lg:grid-cols-5 gap-6">
+                                {(form.watch("migration_process") || []).map((step: any, idx: number) => (
+                                    <div key={idx} className="rounded-2xl border border-slate-200 p-6 bg-white">
+                                        <span className="text-xs font-medium text-[#8CE232]">Step {idx + 1}</span>
+                                        <h3 className="mt-1 font-semibold">{step.step}</h3>
+                                        <p className="mt-1 text-sm text-slate-600">{step.description}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Timeline Section */}
+                    <section id="timeline" className="py-16 bg-white border-t border-b border-slate-200">
+                        <div className="max-w-7xl mx-auto px-6">
+                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Projected Timeline</h2>
+                            <p className="mt-2 text-slate-600 text-sm">
+                                Note: durations are estimates; we can compress or extend based on scope and feedback.
+                            </p>
+                            <div className="mt-10 grid md:grid-cols-3 gap-8">
+                                {(form.watch("timelines") || []).map((timeline: any, idx: number) => (
+                                    <div key={idx} className="relative bg-white rounded-2xl border border-slate-200 p-6">
+                                        <div className="absolute left-0 top-6 bottom-6 w-1 bg-[#8CE232] rounded"></div>
+                                        <h3 className="text-lg font-semibold mb-4 pl-4">{timeline.title}</h3>
+                                        <ol className="mt-3 text-sm text-slate-700 space-y-4 pl-4">
+                                            {timeline.steps.map((step: any, sidx: number) => (
+                                                <li key={sidx}>
+                                                    <div className="font-medium text-slate-900">{step.label}</div>
+                                                    <div className="text-slate-600">{step.desc}</div>
+                                                </li>
+                                            ))}
+                                        </ol>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Footer */}
+                    <footer className="py-8 border-t border-slate-200 text-center text-xs text-slate-500">
+                        © {new Date().getFullYear()} Reaiv — Automation & Software Development
+                    </footer>
+                </div>
+            </div>
         </div>
     );
 }
