@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Plus, MinusCircle } from "lucide-react";
 import { FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
+import { useFormContext } from "react-hook-form";
 import { Toaster, toast } from "sonner";
 
 type ProposalFormValues = {
@@ -90,7 +91,7 @@ export default function CreateProposalPage() {
             hero: {
                 headline: "",
                 subtitle: "",
-                highlights: [{ title: "", desc: "" }],
+                highlights: [],
             },
             solutions: [],
             migration_process: [{ step: "", description: "" }],
@@ -101,6 +102,68 @@ export default function CreateProposalPage() {
             price_premium: "",
         },
     });
+
+    // Get hero from react-hook-form
+    const hero = form.watch("hero");
+    const [newHighlight, setNewHighlight] = useState({ title: "", desc: "" });
+
+    // Ensure hero.highlights is always an array
+    const highlights = Array.isArray(hero?.highlights) ? hero.highlights : [];
+
+    // Add highlight (max 3)
+    const handleAddHighlight = () => {
+        if (!newHighlight.title.trim()) {
+            toast.error("Highlight title is required.");
+            return;
+        }
+        if (!newHighlight.desc.trim()) {
+            toast.error("Highlight description is required.");
+            return;
+        }
+        if (highlights.length >= 3) {
+            toast.error("Maximum of 3 highlights allowed.");
+            return;
+        }
+        form.setValue("hero.highlights", [...highlights, { ...newHighlight }]);
+        setNewHighlight({ title: "", desc: "" });
+        toast.success("Highlight added!");
+    };
+
+    // Remove highlight
+    const handleRemoveHighlight = (idx: number) => {
+        const newHighlights = highlights.filter((_, i) => i !== idx);
+        form.setValue("hero.highlights", newHighlights);
+    };
+
+    // Update highlight title
+    const handleHighlightTitleChange = (idx: number, value: string) => {
+        const newHighlights = highlights.map((h, i) => {
+            if (i === idx) {
+                if (typeof h === "string") {
+                    return value; // If it's a string, just replace with new string
+                } else {
+                    return { ...h, title: value };
+                }
+            }
+            return h;
+        });
+        form.setValue("hero.highlights", newHighlights);
+    };
+
+    // Update highlight desc
+    const handleHighlightDescChange = (idx: number, value: string) => {
+        const newHighlights = highlights.map((h, i) => {
+            if (i === idx) {
+                if (typeof h === "string") {
+                    return { title: h, desc: value }; // Convert string to object
+                } else {
+                    return { ...h, desc: value };
+                }
+            }
+            return h;
+        });
+        form.setValue("hero.highlights", newHighlights);
+    };
 
     const [solutions, setSolutions] = useState<ProposalFormValues["solutions"]>([]);
 
@@ -330,18 +393,15 @@ export default function CreateProposalPage() {
                             </div>
                         )}
 
-                        {/* Hero Section */}
                         <Card className="p-6 border border-slate-300 rounded-xl bg-white mb-8">
                             <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Hero Section</h3>
                             <div className="grid md:grid-cols-2 gap-4">
                                 <FormItem>
-                                    <FormLabel>Headline<span className="text-gray-600">(Auto-Generated)</span></FormLabel>
+                                    <FormLabel>Headline</FormLabel>
                                     <FormControl>
                                         <Input
                                             type="text"
-                                            value={`Reaiv × ${form.watch("client_name") || "{client_name}"} | ${form.watch("title") || "{proposal_title}" || ""}`}
-                                            readOnly
-                                            disabled
+                                            {...form.register("hero.headline")}
                                             placeholder="Hero headline"
                                             className="bg-white/80"
                                         />
@@ -359,26 +419,94 @@ export default function CreateProposalPage() {
                                     </FormControl>
                                 </FormItem>
                             </div>
-                            <FormItem className="mt-4">
-                                <FormLabel>Highlight Title</FormLabel>
-                                <FormControl>
-                                    <Textarea
-                                        {...form.register("hero.highlights.0.title")}
-                                        placeholder="Highlight title (optional)"
-                                        className="bg-white/80 mb-2"
-                                    />
-                                </FormControl>
-                            </FormItem>
-                            <FormItem>
-                                <FormLabel>Highlight Description</FormLabel>
-                                <FormControl>
-                                    <Textarea
-                                        {...form.register("hero.highlights.0.desc")}
-                                        placeholder="Highlight description (optional)"
-                                        className="bg-white/80"
-                                    />
-                                </FormControl>
-                            </FormItem>
+                            <div className="mt-6">
+                                <FormLabel className="mb-2 block">Add Highlight</FormLabel>
+                                <div className="grid md:grid-cols-2 gap-4 mb-4">
+                                    <FormItem>
+                                        <FormLabel>Title</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="text"
+                                                value={newHighlight.title}
+                                                onChange={e => setNewHighlight(h => ({ ...h, title: e.target.value }))}
+                                                placeholder="Highlight title"
+                                                className="bg-white/80"
+                                                disabled={highlights.length >= 3}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                    <FormItem>
+                                        <FormLabel>Description</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="text"
+                                                value={newHighlight.desc}
+                                                onChange={e => setNewHighlight(h => ({ ...h, desc: e.target.value }))}
+                                                placeholder="Highlight description"
+                                                className="bg-white/80"
+                                                disabled={highlights.length >= 3}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                </div>
+                                <div className="text-right">
+                                    <Button
+                                        type="button"
+                                        onClick={handleAddHighlight}
+                                        className="bg-[#8CE232] text-black px-6 py-2 rounded-lg hover:bg-[#8CE232]/90 transition-colors"
+                                        disabled={highlights.length >= 3}
+                                    >
+                                        Add Highlight
+                                    </Button>
+                                </div>
+                                {highlights.length >= 3 && (
+                                    <div className="text-xs text-red-500 mt-2">Maximum of 3 highlights allowed.</div>
+                                )}
+                            </div>
+
+                            {/* Highlights Table */}
+                            <div className="mt-8">
+                                <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Highlights Added</h3>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-12 text-center">No.</TableHead>
+                                            <TableHead>Title</TableHead>
+                                            <TableHead>Description</TableHead>
+                                            <TableHead className="text-center">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {highlights.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={4} className="text-center text-slate-500 py-8">
+                                                    No highlights added.
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : (
+                                            highlights.map((h, idx) => (
+                                                <TableRow key={idx}>
+                                                    <TableCell className="text-center font-semibold">{idx + 1}</TableCell>
+                                                    <TableCell>{typeof h === "string" ? h : h.title}</TableCell>
+                                                    <TableCell>{typeof h === "string" ? "" : h.desc}</TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Button
+                                                            type="button"
+                                                            onClick={() => handleRemoveHighlight(idx)}
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="text-red-500 hover:bg-red-100"
+                                                            aria-label="Delete Highlight"
+                                                        >
+                                                            <Trash2 size={20} />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </Card>
 
                         {/* Overview */}
@@ -485,63 +613,63 @@ export default function CreateProposalPage() {
                                         Add Solution
                                     </Button>
                                 </div>
-                            </Card>
-                        </div>
 
-                        <Separator />
+                                <Separator className="my-4" />
 
-                        {/* Solutions Table */}
-                        <div className="mt-8">
-                            <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Solutions Added</h3>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-12 text-center">No.</TableHead>
-                                        <TableHead>Title</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>Benefit</TableHead>
-                                        <TableHead>Bullets</TableHead>
-                                        <TableHead className="text-center">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {solutions.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="text-center text-slate-500 py-8">
-                                                No solutions created.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        solutions.map((sol, idx) => (
-                                            <TableRow key={idx}>
-                                                <TableCell className="text-center font-semibold">{idx + 1}</TableCell>
-                                                <TableCell>{sol.title}</TableCell>
-                                                <TableCell>{sol.description}</TableCell>
-                                                <TableCell>{sol.benefit}</TableCell>
-                                                <TableCell>
-                                                    <ul className="list-disc pl-4">
-                                                        {sol.bullets.map((b, bIdx) => (
-                                                            <li key={bIdx}>{b}</li>
-                                                        ))}
-                                                    </ul>
-                                                </TableCell>
-                                                <TableCell className="text-center">
-                                                    <Button
-                                                        type="button"
-                                                        onClick={() => removeSolution(idx)}
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-red-500 hover:bg-red-100"
-                                                        aria-label="Delete Solution"
-                                                    >
-                                                        <Trash2 size={20} />
-                                                    </Button>
-                                                </TableCell>
+                                {/* Solutions Table */}
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Solutions Added</h3>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="w-12 text-center">No.</TableHead>
+                                                <TableHead>Title</TableHead>
+                                                <TableHead>Description</TableHead>
+                                                <TableHead>Benefit</TableHead>
+                                                <TableHead>Bullets</TableHead>
+                                                <TableHead className="text-center">Actions</TableHead>
                                             </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {solutions.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-center text-slate-500 py-8">
+                                                        No solutions created.
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                solutions.map((sol, idx) => (
+                                                    <TableRow key={idx}>
+                                                        <TableCell className="text-center font-semibold">{idx + 1}</TableCell>
+                                                        <TableCell>{sol.title}</TableCell>
+                                                        <TableCell>{sol.description}</TableCell>
+                                                        <TableCell>{sol.benefit}</TableCell>
+                                                        <TableCell>
+                                                            <ul className="list-disc pl-4">
+                                                                {sol.bullets.map((b, bIdx) => (
+                                                                    <li key={bIdx}>{b}</li>
+                                                                ))}
+                                                            </ul>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <Button
+                                                                type="button"
+                                                                onClick={() => removeSolution(idx)}
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="text-red-500 hover:bg-red-100"
+                                                                aria-label="Delete Solution"
+                                                            >
+                                                                <Trash2 size={20} />
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </Card>
                         </div>
 
                         <Separator className="my-8" />
