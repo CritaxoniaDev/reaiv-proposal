@@ -16,7 +16,7 @@ export default function ProposalPage() {
 
     useEffect(() => {
         async function fetchProposal() {
-            const res = await fetch(`/api/proposals?id=${id}`);
+            const res = await fetch(`/api/proposals/${id}`);
             if (!res.ok) {
                 toast.error("Invalid or expired proposal link.");
                 router.push("/");

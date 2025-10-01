@@ -99,8 +99,15 @@ export default function EditProposalPage() {
                 const { proposal } = await res.json();
                 console.log("Fetched proposal data:", proposal);
                 if (proposal) {
+                    // Extract raw title from formatted title
+                    let rawTitle = proposal.title;
+                    const expectedPrefix = `Reaiv × ${proposal.client_name} | `;
+                    if (rawTitle && rawTitle.startsWith(expectedPrefix)) {
+                        rawTitle = rawTitle.replace(expectedPrefix, "");
+                    }
                     form.reset({
                         ...proposal,
+                        title: rawTitle,
                         overview_details: proposal.overview_details || {
                             title: "",
                             description: "",
@@ -284,8 +291,15 @@ export default function EditProposalPage() {
     const handleSubmit = async (data: ProposalFormValues) => {
         toast.dismiss();
 
+        // Extract raw title (remove formatting if present)
+        let rawTitle = data.title;
+        const expectedPrefix = `Reaiv × ${data.client_name} | `;
+        if (rawTitle.startsWith(expectedPrefix)) {
+            rawTitle = rawTitle.replace(expectedPrefix, "");
+        }
+
         // Format the title before sending
-        const formattedTitle = `Reaiv × ${data.client_name || "{client_name}"} | ${data.title || "{proposal_title}"}`;
+        const formattedTitle = `Reaiv × ${data.client_name || "{client_name}"} | ${rawTitle || "{proposal_title}"}`;
         const updatedFields = { ...data, title: formattedTitle };
 
         try {

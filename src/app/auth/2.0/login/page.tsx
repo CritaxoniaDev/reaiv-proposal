@@ -37,8 +37,8 @@ export default function LoginPage() {
             if (res.ok) {
                 toast.success("Login successful!");
 
-                // Redirect to the proposal creation page
-                router.push("/dashboard/proposal/listing");
+                // Redirect to the dashboard listing page
+                router.push("/dashboard/listing");
             } else {
                 toast.error("Invalid email or password.");
             }
