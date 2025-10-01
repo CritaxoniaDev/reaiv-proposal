@@ -31,15 +31,10 @@ export default function Home() {
       });
       const result = await res.json();
 
-      if (res.ok && result.success && result.id && result.type) {
+      if (res.ok && result.success && result.id) {
         toast.success("Access granted!");
         setTimeout(() => {
-          // Route based on type
-          if (result.type === "proposal") {
-            router.push(`/proposal/${result.id}`);
-          } else if (result.type === "invoice") {
-            router.push(`/invoice/${result.id}`);
-          }
+          router.push(`/proposal/${result.id}`);
         }, 1200);
       } else {
         toast.error(result.error || "Invalid code.");
@@ -67,10 +62,10 @@ export default function Home() {
               />
             </div>
             <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-black mb-2">
-              Access Portal
+              Proposals Dashboard
             </h1>
             <p className="text-muted-foreground text-sm md:text-base font-medium tracking-wide">
-              Enter your access code to view proposals or invoices
+              Enter your access code to continue
             </p>
           </div>
 
@@ -92,7 +87,7 @@ export default function Home() {
                     <InputOTPSlot
                       key={i}
                       index={i}
-                      className={`w-10 h-12 md:w-12 md:h-16 rounded-lg border-2 border-primary bg-white text-xl md:text-2xl font-bold text-center transition-all duration-150
+                      className={`w-10 h-12 md:w-12 md:h-16 border-1 border-primary bg-white text-xl md:text-2xl font-bold text-center transition-all duration-150
               focus:border-[#8CE232] focus:ring-2 focus:ring-[#8CE232] 
               ${otp.length === 8 ? "border-[#8CE232] shadow-lg" : "border-slate-300"}
             `}
