@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// GET: fetch a proposal by ID (for authenticated dashboard access)
-export async function GET(request: Request, { params }: { params: { id: string } }) {
-    const { id } = params;
+// Next.js expects context.params to be a Promise for dynamic routes
+export async function GET(
+    request: Request,
+    context: { params: Promise<{ id: string }> }
+) {
+    const { id } = await context.params;
 
     if (!id) {
         return NextResponse.json({ error: "Missing proposal id" }, { status: 400 });
@@ -23,8 +26,11 @@ export async function GET(request: Request, { params }: { params: { id: string }
 }
 
 // PUT: update a proposal by ID (for authenticated dashboard access)
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
-    const { id } = params;
+export async function PUT(
+    request: Request,
+    context: { params: Promise<{ id: string }> }
+) {
+    const { id } = await context.params;
     const body = await request.json();
 
     const { error } = await supabase
