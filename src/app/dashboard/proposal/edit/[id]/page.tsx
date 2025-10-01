@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -35,7 +35,7 @@ type ProposalFormValues = {
     hero: {
         headline: string;
         subtitle: string;
-        highlights: ({ title: string; desc: string } | string)[];
+        highlights: ({ title: string; desc: string } | string)[]; // can be string or object
     };
     solutions: {
         title: string;
@@ -56,26 +56,13 @@ type ProposalFormValues = {
     price_premium?: string;
 };
 
-export default function CreateProposalPage() {
-    const [showPrice, setShowPrice] = useState(false);
+export default function EditProposalPage() {
     const router = useRouter();
+    const params = useParams();
+    const proposalId = params?.id as string;
 
-    // Check if the user is logged in
-    useEffect(() => {
-        const checkAuth = async () => {
-            const res = await fetch("/api/auth/check", {
-                method: "GET",
-                credentials: "include",
-            });
-
-            if (!res.ok) {
-                toast.error("You must be logged in to access this page.");
-                router.push("/auth/2.0/proposal/login");
-            }
-        };
-
-        checkAuth();
-    }, [router]);
+    const [showPrice, setShowPrice] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     const form = useForm<ProposalFormValues>({
         defaultValues: {
@@ -101,14 +88,73 @@ export default function CreateProposalPage() {
         },
     });
 
-    // Get hero from react-hook-form
+    // Fetch proposal data and populate form
+    useEffect(() => {
+        const fetchProposal = async () => {
+            setLoading(true);
+            // Use query param structure for consistency
+            const res = await fetch(`/api/proposals/${proposalId}`);
+            console.log("Fetching proposal:", proposalId, "Status:", res.status);
+            if (res.ok) {
+                const { proposal } = await res.json();
+                console.log("Fetched proposal data:", proposal);
+                if (proposal) {
+                    form.reset({
+                        ...proposal,
+                        overview_details: proposal.overview_details || {
+                            title: "",
+                            description: "",
+                            items: [{ label: "", text: "" }],
+                        },
+                        hero: proposal.hero || {
+                            headline: "",
+                            subtitle: "",
+                            highlights: [],
+                        },
+                        solutions: proposal.solutions || [],
+                        migration_process: proposal.migration_process || [{ step: "", description: "" }],
+                        timelines: proposal.timelines || [{ title: "", steps: [{ label: "", desc: "" }] }],
+                        logo_base64: proposal.logo_base64 || "",
+                        price_basic: proposal.price_basic || "",
+                        price_premium: proposal.price_premium || "",
+                    });
+                    setShowPrice(!!(proposal.price_basic || proposal.price_premium));
+                }
+            } else {
+                console.error("Failed to load proposal data. Status:", res.status);
+                const errorData = await res.json().catch(() => ({}));
+                console.error("Error response:", errorData);
+                toast.error("Failed to load proposal data.");
+            }
+            setLoading(false);
+        };
+
+        fetchProposal();
+        // eslint-disable-next-line
+    }, [proposalId]);
+
+    // Auth check
+    useEffect(() => {
+        const checkAuth = async () => {
+            const res = await fetch("/api/auth/check", {
+                method: "GET",
+                credentials: "include",
+            });
+
+            if (!res.ok) {
+                toast.error("You must be logged in to access this page.");
+                router.push("/auth/2.0/proposal/login");
+            }
+        };
+
+        checkAuth();
+    }, [router]);
+
+    // Highlight logic
     const hero = form.watch("hero");
     const [newHighlight, setNewHighlight] = useState({ title: "", desc: "" });
-
-    // Ensure hero.highlights is always an array
     const highlights = Array.isArray(hero?.highlights) ? hero.highlights : [];
 
-    // Add highlight (max 3)
     const handleAddHighlight = () => {
         if (!newHighlight.title.trim()) {
             toast.error("Highlight title is required.");
@@ -127,18 +173,16 @@ export default function CreateProposalPage() {
         toast.success("Highlight added!");
     };
 
-    // Remove highlight
     const handleRemoveHighlight = (idx: number) => {
         const newHighlights = highlights.filter((_, i) => i !== idx);
         form.setValue("hero.highlights", newHighlights);
     };
 
-    // Update highlight title
     const handleHighlightTitleChange = (idx: number, value: string) => {
         const newHighlights = highlights.map((h, i) => {
             if (i === idx) {
                 if (typeof h === "string") {
-                    return value; // If it's a string, just replace with new string
+                    return value;
                 } else {
                     return { ...h, title: value };
                 }
@@ -148,12 +192,11 @@ export default function CreateProposalPage() {
         form.setValue("hero.highlights", newHighlights);
     };
 
-    // Update highlight desc
     const handleHighlightDescChange = (idx: number, value: string) => {
         const newHighlights = highlights.map((h, i) => {
             if (i === idx) {
                 if (typeof h === "string") {
-                    return { title: h, desc: value }; // Convert string to object
+                    return { title: h, desc: value };
                 } else {
                     return { ...h, desc: value };
                 }
@@ -163,31 +206,23 @@ export default function CreateProposalPage() {
         form.setValue("hero.highlights", newHighlights);
     };
 
+    // Solutions logic
     const [solutions, setSolutions] = useState<ProposalFormValues["solutions"]>([]);
+    useEffect(() => {
+        setSolutions(form.watch("solutions") || []);
+    }, [form.watch("solutions")]);
 
     const timelineSteps = solutions.map((sol) => ({
         label: sol.title,
         desc: "",
     }));
 
-    // State for timelines (you can expand this for multiple timelines if needed)
     const [timelines, setTimelines] = useState<
         { title: string; steps: { label: string; desc: string }[] }[]
     >([]);
 
-
-    // Sync solutions with react-hook-form
     useEffect(() => {
-        form.setValue("solutions", solutions);
-    }, [solutions]);
-
-    useEffect(() => {
-        setTimelines(
-            solutions.map((sol, idx) => ({
-                title: sol.title,
-                steps: [{ label: "", desc: "" }],
-            }))
-        );
+        setTimelines(form.watch("timelines") || []);
         form.setValue("timelines", timelines);
         // eslint-disable-next-line
     }, [solutions]);
@@ -199,31 +234,25 @@ export default function CreateProposalPage() {
         bullets: [""],
     });
 
-    // Add new solution to solutions array
     const handleAddSolution = () => {
-        // Check if title, description, and bullets are filled
         if (!newSolution.title.trim()) {
             toast.error("Solution title is required.");
             return;
         }
-
         if (!newSolution.description.trim()) {
             toast.error("Solution description is required.");
             return;
         }
-
         if (newSolution.bullets.some(bullet => !bullet.trim())) {
             toast.error("All bullet points must be filled.");
             return;
         }
-
-        // Add the solution if all validations pass
         setSolutions(prev => [...prev, { ...newSolution }]);
+        form.setValue("solutions", [...solutions, { ...newSolution }]);
         setNewSolution({ title: "", description: "", benefit: "", bullets: [""] });
         toast.success("Solution added successfully!");
     };
 
-    // Handlers for new solution input
     const handleNewSolutionChange = (field: keyof typeof newSolution, value: string) => {
         setNewSolution(prev => ({ ...prev, [field]: value }));
     };
@@ -247,7 +276,9 @@ export default function CreateProposalPage() {
     };
 
     const removeSolution = (idx: number) => {
-        setSolutions(prev => prev.filter((_, i) => i !== idx));
+        const newSolutions = solutions.filter((_, i) => i !== idx);
+        setSolutions(newSolutions);
+        form.setValue("solutions", newSolutions);
     };
 
     const handleSubmit = async (data: ProposalFormValues) => {
@@ -255,39 +286,49 @@ export default function CreateProposalPage() {
 
         // Format the title before sending
         const formattedTitle = `Reaiv × ${data.client_name || "{client_name}"} | ${data.title || "{proposal_title}"}`;
-
-        // Replace the title field with the formatted value
-        const payload = { ...data, title: formattedTitle };
+        const updatedFields = { ...data, title: formattedTitle };
 
         try {
-            const res = await fetch("/api/proposals/create", {
-                method: "POST",
+            // Fetch the current proposal data
+            const currentRes = await fetch(`/api/proposals/edit/${proposalId}`);
+            const currentData = currentRes.ok ? await currentRes.json() : {};
+
+            // Merge current proposal with updated fields
+            const payload = { ...currentData.proposal, ...updatedFields };
+
+            const res = await fetch(`/api/proposals/edit/${proposalId}`, {
+                method: "PUT",
                 body: JSON.stringify(payload),
                 headers: { "Content-Type": "application/json" },
             });
 
             if (res.ok) {
-                const result = await res.json();
-                const otpCode = result.otp.code;
-                toast.success("Proposal created successfully!");
-                form.reset();
-                router.push(`/dashboard/proposal/confirmation?otp=${otpCode}`);
+                toast.success("Proposal updated successfully!");
+                router.push("/dashboard/proposal/listing");
             } else {
                 const errorData = await res.json();
-                toast.error(errorData.error || "Failed to create proposal.");
+                toast.error(errorData.error || "Failed to update proposal.");
             }
         } catch (error) {
             toast.error("An error occurred.");
         }
     };
 
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Toaster richColors position="top-center" />
+                <span className="text-lg text-slate-500">Loading proposal...</span>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
             <Toaster richColors position="top-center" />
             <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Left: Form */}
                 <Card className="p-8 shadow-xl border border-slate-200 bg-white rounded-2xl">
-                    <h2 className="text-4xl tracking-tighter font-bold mb-6 text-center text-slate-900">Create a New Proposal</h2>
+                    <h2 className="text-4xl tracking-tighter font-bold mb-6 text-center text-slate-900">Edit Proposal</h2>
                     <FormProvider {...form}>
                         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                             {/* Formatted Proposal Title Preview */}
@@ -392,7 +433,6 @@ export default function CreateProposalPage() {
                                     </Button>
                                 </div>
                             )}
-
                             <Card className="p-6 border border-slate-300 rounded-xl bg-white mb-8">
                                 <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Hero Section</h3>
                                 <div className="grid md:grid-cols-2 gap-4">
@@ -524,7 +564,7 @@ export default function CreateProposalPage() {
                                 <FormMessage />
                             </FormItem>
 
-                            {/* New Solution Card */}
+                            {/* Solutions Section */}
                             <div className="mb-8">
                                 <Card className="p-6 border border-slate-300 rounded-xl bg-white">
                                     <div className="flex items-center gap-1">
@@ -672,7 +712,7 @@ export default function CreateProposalPage() {
                                 </Card>
                             </div>
 
-                            <Separator className="my-8" />
+                            <Separator className="my-6" />
 
                             {/* Migration Process */}
                             <div className="mb-8">
@@ -711,13 +751,13 @@ export default function CreateProposalPage() {
                             </div>
 
                             {/* Timelines */}
-                            {solutions.length > 0 ? (
+                            {(form.watch("solutions") ?? []).length > 0 ? (
                                 <div className="mb-8">
                                     <FormLabel className="mb-2 block text-md">Timelines</FormLabel>
-                                    {timelines.map((timeline, timelineIdx) => (
+                                    {(form.watch("timelines") ?? []).map((timeline, timelineIdx) => (
                                         <Card key={timelineIdx} className="p-4 mb-8 border border-slate-200 rounded-xl bg-white/80">
                                             <div className="mb-2 font-bold text-[#8CE232]">{timeline.title || `Timeline ${timelineIdx + 1}`}</div>
-                                            {timeline.steps.map((step, stepIdx) => (
+                                            {(timeline.steps ?? []).map((step, stepIdx) => (
                                                 <div key={stepIdx} className="grid md:grid-cols-2 gap-4 mb-2 items-center">
                                                     <FormItem>
                                                         <FormLabel>Step Name</FormLabel>
@@ -726,7 +766,7 @@ export default function CreateProposalPage() {
                                                                 type="text"
                                                                 value={step.label}
                                                                 onChange={e => {
-                                                                    const newTimelines = [...timelines];
+                                                                    const newTimelines = [...form.watch("timelines")];
                                                                     newTimelines[timelineIdx].steps[stepIdx].label = e.target.value;
                                                                     setTimelines(newTimelines);
                                                                     form.setValue("timelines", newTimelines);
@@ -743,7 +783,7 @@ export default function CreateProposalPage() {
                                                                 <Textarea
                                                                     value={step.desc}
                                                                     onChange={e => {
-                                                                        const newTimelines = [...timelines];
+                                                                        const newTimelines = [...form.watch("timelines")];
                                                                         newTimelines[timelineIdx].steps[stepIdx].desc = e.target.value;
                                                                         setTimelines(newTimelines);
                                                                         form.setValue("timelines", newTimelines);
@@ -760,7 +800,7 @@ export default function CreateProposalPage() {
                                                             className="text-red-400 hover:bg-red-100"
                                                             disabled={timeline.steps.length === 1}
                                                             onClick={() => {
-                                                                const newTimelines = [...timelines];
+                                                                const newTimelines = [...form.watch("timelines")];
                                                                 newTimelines[timelineIdx].steps = newTimelines[timelineIdx].steps.filter((_, i) => i !== stepIdx);
                                                                 setTimelines(newTimelines);
                                                                 form.setValue("timelines", newTimelines);
@@ -778,7 +818,7 @@ export default function CreateProposalPage() {
                                                 size="sm"
                                                 className="mt-2 flex gap-1 items-center bg-[#eaffd0] text-[#8CE232] border-[#8CE232] hover:bg-[#8CE232]/10"
                                                 onClick={() => {
-                                                    const newTimelines = [...timelines];
+                                                    const newTimelines = [...form.watch("timelines")];
                                                     newTimelines[timelineIdx].steps.push({ label: "", desc: "" });
                                                     setTimelines(newTimelines);
                                                     form.setValue("timelines", newTimelines);
@@ -841,17 +881,15 @@ export default function CreateProposalPage() {
                                 </div>
                             )}
 
-                            {/* Submit Button */}
                             <Button
                                 type="submit"
                                 className="w-full bg-[#8CE232] text-black font-bold py-6 rounded-lg hover:bg-[#8CE232]/90 transition-colors"
                             >
-                                Create Proposal
+                                Update Proposal
                             </Button>
                         </form>
                     </FormProvider>
                 </Card>
-
                 {/* Right: Live Preview */}
                 <div className="bg-slate-50 text-slate-800 font-sans rounded-2xl border border-slate-200 shadow-xl p-0 overflow-y-auto">
                     {/* Banner */}
@@ -872,7 +910,6 @@ export default function CreateProposalPage() {
                             )}
                         </div>
                     </div>
-
                     {/* Hero Section */}
                     <section id="top" className="relative overflow-hidden py-[70px]">
                         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#8CE232]/20 via-white to-emerald-50"></div>
@@ -908,7 +945,6 @@ export default function CreateProposalPage() {
                             </ul>
                         </div>
                     </section>
-
                     {/* Overview Section */}
                     <section id="overview" className="py-16 bg-white border-t border-b border-slate-200">
                         <div className="max-w-5xl mx-auto px-6 text-center">
@@ -935,7 +971,6 @@ export default function CreateProposalPage() {
                             )}
                         </div>
                     </section>
-
                     {/* Proposed Solutions Section */}
                     <section id="services" className="py-16">
                         <div className="max-w-7xl mx-auto px-6">
@@ -960,7 +995,6 @@ export default function CreateProposalPage() {
                             </div>
                         </div>
                     </section>
-
                     {/* Pricing Section */}
                     {(form.watch("price_basic") || form.watch("price_premium")) && (
                         <section id="pricing" className="py-20 bg-white border-t border-b border-slate-200">
@@ -1036,7 +1070,6 @@ export default function CreateProposalPage() {
                             </div>
                         </section>
                     )}
-
                     {/* Migration Process Section */}
                     <section id="process" className="py-16">
                         <div className="max-w-7xl mx-auto px-6">
@@ -1052,33 +1085,47 @@ export default function CreateProposalPage() {
                             </div>
                         </div>
                     </section>
-
                     {/* Timeline Section */}
-                    <section id="timeline" className="py-16 bg-white border-t border-b border-slate-200">
-                        <div className="max-w-7xl mx-auto px-6">
-                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Projected Timeline</h2>
-                            <p className="mt-2 text-slate-600 text-sm">
-                                Note: durations are estimates; we can compress or extend based on scope and feedback.
-                            </p>
-                            <div className="mt-10 grid md:grid-cols-3 gap-8">
-                                {(form.watch("timelines") || []).map((timeline: any, idx: number) => (
-                                    <div key={idx} className="relative bg-white rounded-2xl border border-slate-200 p-6">
-                                        <div className="absolute left-0 top-6 bottom-6 w-1 bg-[#8CE232] rounded"></div>
-                                        <h3 className="text-lg font-semibold mb-4 pl-4">{timeline.title}</h3>
-                                        <ol className="mt-3 text-sm text-slate-700 space-y-4 pl-4">
-                                            {timeline.steps.map((step: any, sidx: number) => (
-                                                <li key={sidx}>
-                                                    <div className="font-medium text-slate-900">{step.label}</div>
-                                                    <div className="text-slate-600">{step.desc}</div>
-                                                </li>
-                                            ))}
-                                        </ol>
-                                    </div>
-                                ))}
+                    {(form.watch("solutions") ?? []).length > 0 && (
+                        <section id="timeline" className="py-16 bg-white border-t border-b border-slate-200">
+                            <div className="max-w-7xl mx-auto px-6">
+                                <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Projected Timeline</h2>
+                                <p className="mt-2 text-slate-600 text-sm">
+                                    Note: durations are estimates; we can compress or extend based on scope and feedback.
+                                </p>
+                                <div className="mt-10 grid md:grid-cols-3 gap-8">
+                                    {(form.watch("timelines") ?? []).length > 0 ? (
+                                        (form.watch("timelines") ?? []).map((timeline: any, idx: number) => (
+                                            <div key={idx} className="relative bg-white rounded-2xl border border-slate-200 p-6">
+                                                <div className="absolute left-0 top-6 bottom-6 w-1 bg-[#8CE232] rounded"></div>
+                                                <h3 className="text-lg font-semibold mb-4 pl-4">
+                                                    {timeline.title?.trim() ? timeline.title : `Timeline ${idx + 1}`}
+                                                </h3>
+                                                <ol className="mt-3 text-sm text-slate-700 space-y-4 pl-4">
+                                                    {(timeline.steps ?? []).length > 0 ? (
+                                                        timeline.steps.map((step: any, sidx: number) => (
+                                                            <li key={sidx}>
+                                                                <div className="font-medium text-slate-900">
+                                                                    {step.label?.trim() ? step.label : `Step ${sidx + 1}`}
+                                                                </div>
+                                                                <div className="text-slate-600">{step.desc}</div>
+                                                            </li>
+                                                        ))
+                                                    ) : (
+                                                        <li className="text-slate-400">No steps added.</li>
+                                                    )}
+                                                </ol>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="col-span-3 text-center text-slate-500 py-8">
+                                            No timelines available. Please add a solution first.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    </section>
-
+                        </section>
+                    )}
                     {/* Footer */}
                     <footer className="py-8 border-t border-slate-200 text-center text-xs text-slate-500">
                         © {new Date().getFullYear()} Reaiv — Automation & Software Development

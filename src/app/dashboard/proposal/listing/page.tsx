@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
+import { Copy } from "lucide-react";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCaption } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
@@ -190,12 +191,12 @@ export default function ProposalListingPage() {
                                     <TableHead>Title</TableHead>
                                     <TableHead>Client</TableHead>
                                     <TableHead>Overview</TableHead>
+                                    <TableHead>OTP</TableHead>
                                     <TableHead className="text-center">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {filteredProposals.map((proposal, idx) => {
-                                    // Use proposal.otps if available, otherwise find OTP from otps array
                                     const otp = proposal.otps || otps.find(o => o.proposal_id === proposal.id);
                                     return (
                                         <TableRow key={proposal.id} className="hover:bg-[#eaffd0]/40 transition">
@@ -203,6 +204,28 @@ export default function ProposalListingPage() {
                                             <TableCell className="font-medium">{proposal.title}</TableCell>
                                             <TableCell>{proposal.client_name}</TableCell>
                                             <TableCell className="max-w-[300px] truncate">{proposal.overview}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
+                                                        {otp?.code || <span className="text-slate-400">No OTP</span>}
+                                                    </span>
+                                                    {otp?.code && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="text-[#8CE232] hover:bg-[#eaffd0]/60"
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(otp.code);
+                                                                toast.success("OTP copied!");
+                                                            }}
+                                                            aria-label="Copy OTP"
+                                                        >
+                                                            <Copy size={16} />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </TableCell>
                                             <TableCell className="text-center flex gap-2 justify-center">
                                                 {/* <Button
                                                     variant="outline"
@@ -227,6 +250,15 @@ export default function ProposalListingPage() {
                                                 >
                                                     View
                                                 </Button> */}
+                                                {/* Edit Button */}
+                                                <Button
+                                                    variant="secondary"
+                                                    className="px-4 text-black border-[#8CE232] hover:bg-[#eaffd0]/60"
+                                                    onClick={() => router.push(`/dashboard/proposal/edit/${proposal.id}`)}
+                                                    aria-label="Edit Proposal"
+                                                >
+                                                    Edit
+                                                </Button>
                                                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                                                     <DialogTrigger asChild>
                                                         <Button
