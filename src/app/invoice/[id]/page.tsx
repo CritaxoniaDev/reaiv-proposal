@@ -65,10 +65,13 @@ export default function InvoicePage() {
         <div className="min-h-screen bg-gray-100 p-0">
             <div className="max-w-4xl mx-auto bg-white shadow-lg">
                 {/* Header */}
-                <div className="bg-slate-700 text-white p-10 flex justify-between items-start">
+                <div className="bg-slate-700 text-white p-10 justify-between items-start">
                     <div>
-                        <div className="inline-block bg-[#91cd49] text-white px-8 py-4 rounded-lg text-3xl font-bold lowercase tracking-wide">
-                            reaiv
+                        <div className="mb-10 border-2 border-[#91cd49] text-[#91cd49] text-center px-5 py-2 rounded font-semibold uppercase tracking-widest text-sm">
+                            INVOICE
+                        </div>
+                        <div className="inline-block bg-[#91cd49] text-white px-8 py-4 rounded-lg text-3xl font-bold tracking-wide">
+                            REAIV 
                         </div>
                         <div className="grid grid-cols-2 gap-5 mt-8">
                             <div className="text-left">
@@ -88,9 +91,6 @@ export default function InvoicePage() {
                                 <div className="text-base text-[#91cd49] font-semibold">{formatDate(invoice.due_date)}</div>
                             </div>
                         </div>
-                    </div>
-                    <div className="border-2 border-[#91cd49] text-[#91cd49] px-5 py-2 rounded font-semibold uppercase tracking-widest text-sm">
-                        INVOICE
                     </div>
                 </div>
 

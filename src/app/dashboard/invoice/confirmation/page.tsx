@@ -4,10 +4,10 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, FileText, ArrowLeft, ExternalLink } from "lucide-react";
+import { Copy, Receipt, ArrowLeft, ExternalLink } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
-export default function ProposalConfirmationPage() {
+export default function InvoiceConfirmationPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const otpCode = searchParams.get("otp");
@@ -53,13 +53,13 @@ export default function ProposalConfirmationPage() {
     };
 
     const handleCreateAnother = () => {
-        router.push("/dashboard/proposal/create");
+        router.push("/dashboard/invoice/create");
     };
 
-    const handleViewProposal = () => {
+    const handleViewInvoice = () => {
         if (otpCode) {
             // Open in new tab
-            window.open(`/proposal/${otpCode}`, '_blank');
+            window.open(`/invoice/${otpCode}`, '_blank');
         }
     };
 
@@ -68,16 +68,16 @@ export default function ProposalConfirmationPage() {
             <div className="min-h-screen bg-gradient-to-br from-[#eaffd0] via-white to-[#8CE232]/10 flex items-center justify-center px-4">
                 <Toaster richColors position="top-center" />
                 <Card className="p-8 text-center max-w-md">
-                    <FileText className="mx-auto mb-4 text-red-500" size={48} />
+                    <Receipt className="mx-auto mb-4 text-red-500" size={48} />
                     <h1 className="text-2xl font-bold text-slate-800 mb-4">Invalid Access</h1>
                     <p className="text-slate-600 mb-6">
-                        No OTP code found. Please create a proposal first.
+                        No OTP code found. Please create an invoice first.
                     </p>
                     <Button 
-                        onClick={() => router.push("/dashboard/proposal/create")}
+                        onClick={() => router.push("/dashboard/invoice/create")}
                         className="bg-[#8CE232] text-black font-bold hover:bg-[#8CE232]/90"
                     >
-                        Create Proposal
+                        Create Invoice
                     </Button>
                 </Card>
             </div>
@@ -92,13 +92,13 @@ export default function ProposalConfirmationPage() {
                     {/* Success Icon */}
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center justify-center w-20 h-20 bg-[#8CE232]/20 rounded-full mb-4">
-                            <FileText className="text-[#8CE232]" size={40} />
+                            <Receipt className="text-[#8CE232]" size={40} />
                         </div>
                         <h1 className="text-3xl font-bold text-slate-800 mb-2">
-                            Proposal Created Successfully! 🎉
+                            Invoice Created Successfully!
                         </h1>
                         <p className="text-slate-600 text-lg">
-                            Your proposal has been generated and is ready to be shared.
+                            Your invoice has been generated and is ready to be shared.
                         </p>
                     </div>
 
@@ -106,10 +106,10 @@ export default function ProposalConfirmationPage() {
                     <div className="bg-gradient-to-br from-[#8CE232]/10 to-transparent border border-[#8CE232]/30 rounded-xl p-6 mb-8">
                         <div className="text-center">
                             <h2 className="text-lg font-semibold text-slate-700 mb-2">
-                                Proposal Access Code
+                                Invoice Access Code
                             </h2>
                             <p className="text-sm text-slate-600 mb-4">
-                                Share this code with your client to access the proposal
+                                Share this code with your client to access the invoice
                             </p>
                             
                             <div className="bg-white border-2 border-[#8CE232] rounded-lg p-4 mb-4">
@@ -145,7 +145,7 @@ export default function ProposalConfirmationPage() {
                                 <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
                                     2
                                 </div>
-                                <p>Client can access the proposal at <strong>your-domain.com</strong> using this code</p>
+                                <p>Client can access the invoice at <strong>your-domain.com</strong> using this code</p>
                             </div>
                             <div className="flex items-start gap-2">
                                 <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
@@ -159,18 +159,18 @@ export default function ProposalConfirmationPage() {
                     {/* Action Buttons */}
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Button
-                            onClick={handleViewProposal}
+                            onClick={handleViewInvoice}
                             className="flex-1 bg-[#8CE232] text-black font-bold py-3 hover:bg-[#8CE232]/90 transition-colors"
                         >
                             <ExternalLink size={16} className="mr-2" />
-                            Preview Proposal
+                            Preview Invoice
                         </Button>
                         <Button
                             onClick={handleCreateAnother}
                             variant="outline"
                             className="flex-1 border-[#8CE232] text-[#8CE232] font-bold py-3 hover:bg-[#8CE232]/10 transition-colors"
                         >
-                            <FileText size={16} className="mr-2" />
+                            <Receipt size={16} className="mr-2" />
                             Create Another
                         </Button>
                         <Button
@@ -186,7 +186,7 @@ export default function ProposalConfirmationPage() {
                     {/* Footer Note */}
                     <div className="mt-8 pt-6 border-t border-slate-200 text-center">
                         <p className="text-xs text-slate-500">
-                            This proposal was created using <strong>REAIV</strong> - Reimagine AI Ventures
+                            This invoice was created using <strong>REAIV</strong> - Reimagine AI Ventures
                         </p>
                     </div>
                 </Card>
