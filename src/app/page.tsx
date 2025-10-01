@@ -31,10 +31,15 @@ export default function Home() {
       });
       const result = await res.json();
 
-      if (res.ok && result.success && result.id) {
+      if (res.ok && result.success && result.id && result.type) {
         toast.success("Access granted!");
         setTimeout(() => {
-          router.push(`/proposal/${result.id}`);
+          // Route based on type
+          if (result.type === "proposal") {
+            router.push(`/proposal/${result.id}`);
+          } else if (result.type === "invoice") {
+            router.push(`/invoice/${result.id}`);
+          }
         }, 1200);
       } else {
         toast.error(result.error || "Invalid code.");
@@ -62,10 +67,10 @@ export default function Home() {
               />
             </div>
             <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-black mb-2">
-              Proposals Dashboard
+              Access Portal
             </h1>
             <p className="text-muted-foreground text-sm md:text-base font-medium tracking-wide">
-              Enter your access code to continue
+              Enter your access code to view proposals or invoices
             </p>
           </div>
 
