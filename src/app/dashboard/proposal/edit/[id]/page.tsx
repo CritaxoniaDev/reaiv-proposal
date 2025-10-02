@@ -70,6 +70,9 @@ export default function EditProposalPage() {
     const [loading, setLoading] = useState(true);
     const [pricingTiers, setPricingTiers] = useState<ProposalFormValues["pricing"]>([]);
 
+    // Add state to track the original title format
+    const [originalTitle, setOriginalTitle] = useState("");
+
     // Add state for new pricing tier
     const [newPricingTier, setNewPricingTier] = useState({
         name: "",
@@ -171,7 +174,10 @@ export default function EditProposalPage() {
                 const { proposal } = await res.json();
                 console.log("Fetched proposal data:", proposal);
                 if (proposal) {
-                    // Extract raw title from formatted title
+                    // Store the original title for later use
+                    setOriginalTitle(proposal.title);
+                    
+                    // Extract raw title from formatted title for display in form
                     let rawTitle = proposal.title;
                     const expectedPrefix = `Reaiv × ${proposal.client_name} | `;
                     if (rawTitle && rawTitle.startsWith(expectedPrefix)) {
@@ -184,7 +190,7 @@ export default function EditProposalPage() {
 
                     form.reset({
                         ...proposal,
-                        title: rawTitle,
+                        title: rawTitle, // Use extracted raw title for form input
                         overview_details: proposal.overview_details || {
                             title: "",
                             description: "",
@@ -367,16 +373,27 @@ export default function EditProposalPage() {
     const handleSubmit = async (data: ProposalFormValues) => {
         toast.dismiss();
 
-        // Extract raw title (remove formatting if present)
-        let rawTitle = data.title;
+        // Get the current form title value
+        const currentFormTitle = data.title.trim();
+        
+        // Extract the raw title from the original stored title
+        let originalRawTitle = originalTitle;
         const expectedPrefix = `Reaiv × ${data.client_name} | `;
-        if (rawTitle.startsWith(expectedPrefix)) {
-            rawTitle = rawTitle.replace(expectedPrefix, "");
+        if (originalRawTitle && originalRawTitle.startsWith(expectedPrefix)) {
+            originalRawTitle = originalRawTitle.replace(expectedPrefix, "");
         }
 
-        // Format the title before sending
-        const formattedTitle = `Reaiv × ${data.client_name || "{client_name}"} | ${rawTitle || "{proposal_title}"}`;
-        const updatedFields = { ...data, title: formattedTitle };
+        // Determine which title to use
+        let finalTitle;
+        if (currentFormTitle === originalRawTitle || currentFormTitle === "") {
+            // No change made to title, use original formatted title
+            finalTitle = originalTitle;
+        } else {
+            // Title was changed, format the new title
+            finalTitle = `Reaiv × ${data.client_name || "{client_name}"} | ${currentFormTitle || "{proposal_title}"}`;
+        }
+
+        const updatedFields = { ...data, title: finalTitle };
 
         try {
             // Fetch the current proposal data
@@ -394,7 +411,7 @@ export default function EditProposalPage() {
 
             if (res.ok) {
                 toast.success("Proposal updated successfully!");
-                router.push("/dashboard/listing");
+                router.push("/dashboard/proposal/listing");
             } else {
                 const errorData = await res.json();
                 toast.error(errorData.error || "Failed to update proposal.");
@@ -1242,21 +1259,21 @@ export default function EditProposalPage() {
 
                                 {/* Dynamic Grid Layout based on number of tiers */}
                                 <div className={`mt-8 grid gap-6 ${pricingTiers.length === 1
-                                        ? 'grid-cols-1 max-w-sm mx-auto'
-                                        : pricingTiers.length === 2
-                                            ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto'
-                                            : pricingTiers.length === 3
-                                                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                                                : pricingTiers.length === 4
-                                                    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
-                                                    : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+                                    ? 'grid-cols-1 max-w-sm mx-auto'
+                                    : pricingTiers.length === 2
+                                        ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto'
+                                        : pricingTiers.length === 3
+                                            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                                            : pricingTiers.length === 4
+                                                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+                                                : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
                                     }`}>
                                     {pricingTiers.map((tier, idx) => (
                                         <div
                                             key={idx}
                                             className={`relative block rounded-2xl border p-6 hover:shadow-lg transition-all duration-200 ${tier.highlighted
-                                                    ? 'border-[#8CE232] bg-gradient-to-br from-white to-[#8CE232]/10 shadow-lg scale-105'
-                                                    : 'border-slate-200 bg-white hover:border-slate-300'
+                                                ? 'border-[#8CE232] bg-gradient-to-br from-white to-[#8CE232]/10 shadow-lg scale-105'
+                                                : 'border-slate-200 bg-white hover:border-slate-300'
                                                 } ${pricingTiers.length === 1 ? 'min-h-[400px]' : 'min-h-[350px]'
                                                 }`}
                                             aria-label={`${tier.name} Pricing`}
