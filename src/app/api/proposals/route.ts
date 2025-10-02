@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid or expired OTP" }, { status: 404 });
   }
 
-  // Get proposal record
+  // Get proposal record with new pricing field
   const { data: proposal, error: proposalError } = await supabase
     .from("proposals")
     .select("*")

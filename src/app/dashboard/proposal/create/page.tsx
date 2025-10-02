@@ -52,12 +52,18 @@ type ProposalFormValues = {
         steps: { label: string; desc: string }[];
     }[];
     logo_base64?: string;
-    price_basic?: string;
-    price_premium?: string;
+    pricing: {
+        name: string;
+        price: string;
+        description: string;
+        features: string[];
+        highlighted: boolean;
+    }[];
 };
 
 export default function CreateProposalPage() {
     const [showPrice, setShowPrice] = useState(false);
+    const [pricingTiers, setPricingTiers] = useState<ProposalFormValues["pricing"]>([]);
     const router = useRouter();
 
     // Check if the user is logged in
@@ -76,6 +82,14 @@ export default function CreateProposalPage() {
 
         checkAuth();
     }, [router]);
+
+    const [newPricingTier, setNewPricingTier] = useState({
+        name: "",
+        price: "",
+        description: "One time payment",
+        features: [""],
+        highlighted: false
+    });
 
     const form = useForm<ProposalFormValues>({
         defaultValues: {
@@ -96,10 +110,67 @@ export default function CreateProposalPage() {
             migration_process: [{ step: "", description: "" }],
             timelines: [{ title: "", steps: [{ label: "", desc: "" }] }],
             logo_base64: "",
-            price_basic: "",
-            price_premium: "",
+            pricing: [],
         },
     });
+
+    useEffect(() => {
+        form.setValue("pricing", pricingTiers);
+    }, [pricingTiers, form]);
+
+    // Add new pricing tier
+    const handleAddPricingTier = () => {
+        if (!newPricingTier.name.trim()) {
+            toast.error("Pricing tier name is required.");
+            return;
+        }
+        if (!newPricingTier.price.trim()) {
+            toast.error("Price is required.");
+            return;
+        }
+        if (newPricingTier.features.some(feature => !feature.trim())) {
+            toast.error("All features must be filled.");
+            return;
+        }
+
+        setPricingTiers(prev => [...prev, { ...newPricingTier }]);
+        setNewPricingTier({
+            name: "",
+            price: "",
+            description: "One time payment",
+            features: [""],
+            highlighted: false
+        });
+        toast.success("Pricing tier added successfully!");
+    };
+
+    // Remove pricing tier
+    const removePricingTier = (idx: number) => {
+        setPricingTiers(prev => prev.filter((_, i) => i !== idx));
+    };
+
+    // Handle new pricing tier changes
+    const handleNewPricingTierChange = (field: keyof typeof newPricingTier, value: any) => {
+        setNewPricingTier(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleNewFeatureChange = (idx: number, value: string) => {
+        setNewPricingTier(prev => ({
+            ...prev,
+            features: prev.features.map((f, i) => i === idx ? value : f)
+        }));
+    };
+
+    const addNewFeature = () => {
+        setNewPricingTier(prev => ({ ...prev, features: [...prev.features, ""] }));
+    };
+
+    const removeNewFeature = (idx: number) => {
+        setNewPricingTier(prev => ({
+            ...prev,
+            features: prev.features.filter((_, i) => i !== idx)
+        }));
+    };
 
     // Get hero from react-hook-form
     const hero = form.watch("hero");
@@ -811,33 +882,172 @@ export default function CreateProposalPage() {
                                 </FormLabel>
                             </div>
 
-                            {/* Pricing Inputs */}
+                            {/* Pricing Section */}
                             {showPrice && (
-                                <div className="mb-8 grid md:grid-cols-2 gap-4">
-                                    <FormItem>
-                                        <FormLabel>Basic Payment</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="text"
-                                                {...form.register("price_basic")}
-                                                placeholder="e.g. ₱15,000"
-                                                className="bg-white/80"
+                                <div className="mb-8">
+                                    <Card className="p-6 border border-slate-300 rounded-xl bg-white">
+                                        <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Add Pricing Tier</h3>
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <FormItem>
+                                                <FormLabel>Tier Name</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="text"
+                                                        value={newPricingTier.name}
+                                                        onChange={e => handleNewPricingTierChange("name", e.target.value)}
+                                                        placeholder="e.g., Basic, Premium, Enterprise"
+                                                        className="bg-white/80"
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                            <FormItem>
+                                                <FormLabel>Price</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="text"
+                                                        value={newPricingTier.price}
+                                                        onChange={e => handleNewPricingTierChange("price", e.target.value)}
+                                                        placeholder="e.g., ₱15,000"
+                                                        className="bg-white/80"
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        </div>
+                                        <FormItem className="mt-4">
+                                            <FormLabel>Description</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="text"
+                                                    value={newPricingTier.description}
+                                                    onChange={e => handleNewPricingTierChange("description", e.target.value)}
+                                                    placeholder="e.g., One time payment, Monthly subscription"
+                                                    className="bg-white/80"
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                        <FormItem className="mt-4">
+                                            <FormLabel>Features</FormLabel>
+                                            <div className="space-y-2">
+                                                {newPricingTier.features.map((feature, fIdx) => (
+                                                    <div key={fIdx} className="flex gap-2 items-center">
+                                                        <Input
+                                                            type="text"
+                                                            value={feature}
+                                                            onChange={e => handleNewFeatureChange(fIdx, e.target.value)}
+                                                            placeholder={`Feature ${fIdx + 1}`}
+                                                            className="bg-white/80"
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            onClick={() => removeNewFeature(fIdx)}
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="text-red-400 hover:bg-red-100"
+                                                            disabled={newPricingTier.features.length === 1}
+                                                            aria-label="Remove Feature"
+                                                        >
+                                                            <MinusCircle size={18} />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                                <Button
+                                                    type="button"
+                                                    onClick={addNewFeature}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="mt-2 flex gap-1 items-center bg-[#eaffd0] text-[#8CE232] border-[#8CE232] hover:bg-[#8CE232]/10"
+                                                >
+                                                    <Plus size={16} />
+                                                    Add Feature
+                                                </Button>
+                                            </div>
+                                        </FormItem>
+                                        <div className="mt-4 flex items-center gap-2">
+                                            <Switch
+                                                checked={newPricingTier.highlighted}
+                                                onCheckedChange={(checked) => handleNewPricingTierChange("highlighted", checked)}
+                                                id="highlight-tier"
                                             />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                    <FormItem>
-                                        <FormLabel>Premium Payment</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="text"
-                                                {...form.register("price_premium")}
-                                                placeholder="e.g. ₱20,000"
-                                                className="bg-white/80"
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
+                                            <FormLabel htmlFor="highlight-tier" className="text-sm">
+                                                Highlight this tier (recommended/popular)
+                                            </FormLabel>
+                                        </div>
+                                        <div className="mt-6 text-right">
+                                            <Button
+                                                type="button"
+                                                onClick={handleAddPricingTier}
+                                                className="bg-[#8CE232] text-black px-6 py-2 rounded-lg hover:bg-[#8CE232]/90 transition-colors"
+                                            >
+                                                Add Pricing Tier
+                                            </Button>
+                                        </div>
+
+                                        <Separator className="my-4" />
+
+                                        {/* Pricing Tiers Table */}
+                                        <div>
+                                            <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Pricing Tiers Added</h3>
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead className="w-12 text-center">No.</TableHead>
+                                                        <TableHead>Name</TableHead>
+                                                        <TableHead>Price</TableHead>
+                                                        <TableHead>Description</TableHead>
+                                                        <TableHead>Features</TableHead>
+                                                        <TableHead>Highlighted</TableHead>
+                                                        <TableHead className="text-center">Actions</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {pricingTiers.length === 0 ? (
+                                                        <TableRow>
+                                                            <TableCell colSpan={7} className="text-center text-slate-500 py-8">
+                                                                No pricing tiers added.
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ) : (
+                                                        pricingTiers.map((tier, idx) => (
+                                                            <TableRow key={idx}>
+                                                                <TableCell className="text-center font-semibold">{idx + 1}</TableCell>
+                                                                <TableCell className="font-semibold">{tier.name}</TableCell>
+                                                                <TableCell className="font-bold text-[#8CE232]">{tier.price}</TableCell>
+                                                                <TableCell>{tier.description}</TableCell>
+                                                                <TableCell>
+                                                                    <ul className="list-disc pl-4">
+                                                                        {tier.features.map((feature, fIdx) => (
+                                                                            <li key={fIdx} className="text-sm">{feature}</li>
+                                                                        ))}
+                                                                    </ul>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {tier.highlighted ? (
+                                                                        <span className="bg-[#8CE232] text-black px-2 py-1 rounded text-xs font-semibold">
+                                                                            ⭐ Highlighted
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="text-slate-400 text-xs">No</span>
+                                                                    )}
+                                                                </TableCell>
+                                                                <TableCell className="text-center">
+                                                                    <Button
+                                                                        type="button"
+                                                                        onClick={() => removePricingTier(idx)}
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="text-red-500 hover:bg-red-100"
+                                                                        aria-label="Delete Pricing Tier"
+                                                                    >
+                                                                        <Trash2 size={20} />
+                                                                    </Button>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    </Card>
                                 </div>
                             )}
 
@@ -910,23 +1120,26 @@ export default function CreateProposalPage() {
                     </section>
 
                     {/* Overview Section */}
-                    <section id="overview" className="py-16 bg-white border-t border-b border-slate-200">
-                        <div className="max-w-5xl mx-auto px-6 text-center">
-                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Overview</h2>
-                            <p className="mt-4 text-slate-600 leading-relaxed max-w-3xl mx-auto">
+                    <section id="overview" className="py-12 md:py-16 bg-white border-t border-b border-slate-200">
+                        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
+                            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">Overview</h2>
+                            <p className="mt-3 md:mt-4 text-sm sm:text-base text-slate-600 leading-relaxed max-w-3xl mx-auto px-2">
                                 {form.watch("overview")}
                             </p>
                             {form.watch("overview_details.title")?.trim() && form.watch("overview_details.description")?.trim() && (
-                                <div className="mt-8 text-left bg-slate-50 border border-slate-200 rounded-xl p-5">
-                                    <h3 className="font-semibold">{form.watch("overview_details.title")}</h3>
-                                    <p className="mt-2 text-sm text-slate-600">
+                                <div className="mt-6 md:mt-8 text-left bg-slate-50 border border-slate-200 rounded-lg md:rounded-xl p-4 md:p-5 mx-2 sm:mx-0">
+                                    <h3 className="text-sm sm:text-base font-semibold text-slate-900">
+                                        {form.watch("overview_details.title")}
+                                    </h3>
+                                    <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
                                         {form.watch("overview_details.description")}
                                     </p>
                                     {form.watch("overview_details.items")?.length > 0 && (
-                                        <ul className="mt-2 text-sm text-slate-700 space-y-1 list-disc pl-4">
+                                        <ul className="mt-3 text-xs sm:text-sm text-slate-700 space-y-1.5 list-disc pl-4 sm:pl-5">
                                             {form.watch("overview_details.items").map((item: any, idx: number) => (
-                                                <li key={idx}>
-                                                    <strong>{item.label}:</strong> {item.text}
+                                                <li key={idx} className="leading-relaxed">
+                                                    <strong className="text-slate-900">{item.label}:</strong>{" "}
+                                                    <span className="text-slate-700">{item.text}</span>
                                                 </li>
                                             ))}
                                         </ul>
@@ -961,8 +1174,8 @@ export default function CreateProposalPage() {
                         </div>
                     </section>
 
-                    {/* Pricing Section */}
-                    {(form.watch("price_basic") || form.watch("price_premium")) && (
+                    {/* Updated Pricing Section Preview */}
+                    {pricingTiers.length > 0 && (
                         <section id="pricing" className="py-20 bg-white border-t border-b border-slate-200">
                             <div className="max-w-7xl mx-auto px-6">
                                 <div className="flex items-end justify-between flex-wrap gap-4">
@@ -976,62 +1189,103 @@ export default function CreateProposalPage() {
                                         PHP pricing • Taxes, 3rd-party fees not included
                                     </span>
                                 </div>
-                                <div className="mt-8 grid md:grid-cols-2 gap-6">
-                                    {form.watch("price_basic") && (
+
+                                {/* Dynamic Grid Layout based on number of tiers */}
+                                <div className={`mt-8 grid gap-6 ${pricingTiers.length === 1
+                                    ? 'grid-cols-1 max-w-sm mx-auto' // Single card - centered and narrow
+                                    : pricingTiers.length === 2
+                                        ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto' // Two cards - stacked on mobile, side by side on desktop
+                                        : pricingTiers.length === 3
+                                            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' // Three cards - responsive breakpoints
+                                            : pricingTiers.length === 4
+                                                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' // Four cards - 2x2 on tablet, 1x4 on desktop
+                                                : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' // 5+ cards - multiple rows
+                                    }`}>
+                                    {pricingTiers.map((tier, idx) => (
                                         <div
-                                            className="relative block rounded-2xl border border-slate-200 bg-white p-6 hover:shadow-lg transition"
-                                            aria-label="Basic Pricing"
+                                            key={idx}
+                                            className={`relative block rounded-2xl border p-6 hover:shadow-lg transition-all duration-200 ${tier.highlighted
+                                                ? 'border-[#8CE232] bg-gradient-to-br from-white to-[#8CE232]/10 shadow-lg scale-105'
+                                                : 'border-slate-200 bg-white hover:border-slate-300'
+                                                } ${
+                                                // Make single card wider and highlighted cards stand out more
+                                                pricingTiers.length === 1 ? 'min-h-[400px]' : 'min-h-[350px]'
+                                                }`}
+                                            aria-label={`${tier.name} Pricing`}
                                         >
-                                            <h3 className="text-lg font-semibold text-slate-900">Basic</h3>
-                                            <div className="mt-2 flex items-baseline gap-1">
-                                                <span className="text-4xl font-extrabold tracking-tight">
-                                                    {form.watch("price_basic")}
-                                                </span>
-                                                <span className="text-sm text-slate-500">One time payment</span>
+                                            {tier.highlighted && (
+                                                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                                                    <span className="bg-[#8CE232] text-black px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                                                        ⭐ POPULAR
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            <div className="text-left">
+                                                <h3 className={`font-semibold text-slate-900 ${pricingTiers.length === 1 ? 'text-xl' : 'text-lg'
+                                                    }`}>
+                                                    {tier.name}
+                                                </h3>
+
+                                                <div className="flex items-baseline justify-start gap-1">
+                                                    <span className={`font-extrabold tracking-tight text-slate-900 ${pricingTiers.length === 1 ? 'text-5xl' : 'text-4xl'
+                                                        }`}>
+                                                        {tier.price}
+                                                    </span>
+                                                </div>
+
+                                                <p className={`text-slate-500 mt-2 ${pricingTiers.length === 1 ? 'text-base' : 'text-sm'
+                                                    }`}>
+                                                    {tier.description}
+                                                </p>
                                             </div>
-                                            <ul className="mt-8 space-y-2 text-sm text-slate-700">
-                                                <li>• Exclusive for <strong>n8n</strong> and <strong>GHL</strong> development only</li>
-                                                <li>• Multiple projects accepted within a one-month timeframe</li>
-                                                <li>• Defined timelines per project (not daily new projects)</li>
-                                            </ul>
-                                        </div>
-                                    )}
-                                    {form.watch("price_premium") && (
-                                        <div
-                                            className="relative block rounded-2xl border border-[#8CE232] bg-gradient-to-br from-white to-[#8CE232]/10 p-6 price-highlight hover:shadow-lg transition"
-                                            aria-label="Premium Pricing"
-                                        >
-                                            <h3 className="text-lg font-semibold text-slate-900">Premium</h3>
-                                            <div className="mt-2 flex items-baseline gap-1">
-                                                <span className="text-4xl font-extrabold tracking-tight">
-                                                    {form.watch("price_premium")}
-                                                </span>
-                                                <span className="text-sm text-slate-500">One time payment</span>
+
+                                            <div className="mt-6">
+                                                <ul className={`space-y-2 text-slate-700 ${pricingTiers.length === 1 ? 'text-base' : 'text-sm'
+                                                    }`}>
+                                                    {tier.features.map((feature, fIdx) => (
+                                                        <li key={fIdx} className="flex items-start gap-2">
+                                                            <span className="text-[#8CE232] mt-1 flex-shrink-0">✓</span>
+                                                            <span>{feature}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
                                             </div>
-                                            <ul className="mt-4 space-y-2 text-sm text-slate-700">
-                                                <li>• Includes <strong>n8n</strong>, <strong>GHL</strong>, and full software development</li>
-                                                <li>• Advanced/stacked automations</li>
-                                                <li>• API & third-party integrations</li>
-                                                <li>• Web app or dashboard components</li>
-                                                <li>• Documentation & milestone demos</li>
-                                                <li>• Final price varies by scope</li>
-                                            </ul>
+
+                                            {/* Call to action for single pricing tier */}
+                                            {pricingTiers.length === 1 && (
+                                                <div className="mt-8 text-center">
+                                                    <button className="w-full bg-[#8CE232] text-black font-semibold py-3 px-6 rounded-lg hover:bg-[#7ab33a] transition-colors">
+                                                        Get Started
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+                                    ))}
                                 </div>
-                                <p className="mt-8 text-xs text-slate-500">
-                                    Note: Complex software features, additional integrations, and compliance requirements may adjust the final
-                                    estimate after discovery. Maintenance fees are not included.
-                                </p>
-                                <div className="mt-8 bg-[#8CE232] p-6">
-                                    <p className="text-md text-center text-black">
-                                        You can explore our portfolio on our website{" "}
-                                        <span className="text-white">
-                                            <a href="https://www.reaiv.com/portfolio" target="_blank" rel="noopener noreferrer">
-                                                Click Here!
-                                            </a>
-                                        </span>
+
+                                {/* Additional info section */}
+                                <div className="mt-12 space-y-4">
+                                    <p className="text-xs text-slate-500 text-center">
+                                        Note: Complex software features, additional integrations, and compliance requirements may adjust the final
+                                        estimate after discovery. Maintenance fees are not included.
                                     </p>
+
+                                    <div className="bg-[#8CE232] rounded-lg p-6">
+                                        <p className="text-base text-center text-black font-medium">
+                                            You can explore our portfolio on our website{" "}
+                                            <span className="text-white font-semibold">
+                                                <a
+                                                    href="https://www.reaiv.com/portfolio"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="underline hover:no-underline transition-all"
+                                                >
+                                                    Click Here!
+                                                </a>
+                                            </span>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </section>

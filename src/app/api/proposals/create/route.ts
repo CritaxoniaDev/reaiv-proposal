@@ -29,8 +29,7 @@ export async function POST(request: Request) {
                     migration_process: data.migration_process,
                     timelines: data.timelines,
                     logo_base64: data.logo_base64,
-                    price_basic: data.price_basic || "",
-                    price_premium: data.price_premium || "",
+                    pricing: data.pricing || [], // New pricing field as JSON array
                 }
             ])
             .select()
