@@ -176,7 +176,7 @@ export default function EditProposalPage() {
                 if (proposal) {
                     // Store the original title for later use
                     setOriginalTitle(proposal.title);
-                    
+
                     // Extract raw title from formatted title for display in form
                     let rawTitle = proposal.title;
                     const expectedPrefix = `Reaiv × ${proposal.client_name} | `;
@@ -221,8 +221,6 @@ export default function EditProposalPage() {
         fetchProposal();
     }, [proposalId, form]);
 
-    // ... (keep all existing hero, solutions, timelines logic the same) ...
-
     // Auth check
     useEffect(() => {
         const checkAuth = async () => {
@@ -240,7 +238,7 @@ export default function EditProposalPage() {
         checkAuth();
     }, [router]);
 
-    // Highlight logic (keep existing code)
+    // Highlight logic
     const hero = form.watch("hero");
     const [newHighlight, setNewHighlight] = useState({ title: "", desc: "" });
     const highlights = Array.isArray(hero?.highlights) ? hero.highlights : [];
@@ -296,25 +294,80 @@ export default function EditProposalPage() {
         form.setValue("hero.highlights", newHighlights);
     };
 
-    // Solutions logic (keep existing code)
+    // Fixed Solutions and Timeline logic
     const [solutions, setSolutions] = useState<ProposalFormValues["solutions"]>([]);
-    useEffect(() => {
-        setSolutions(form.watch("solutions") || []);
-    }, [form.watch("solutions")]);
-
-    const timelineSteps = solutions.map((sol) => ({
-        label: sol.title,
-        desc: "",
-    }));
-
     const [timelines, setTimelines] = useState<
         { title: string; steps: { label: string; desc: string }[] }[]
     >([]);
 
+    // Watch solutions changes and update timelines accordingly
     useEffect(() => {
-        setTimelines(form.watch("timelines") || []);
-        form.setValue("timelines", timelines);
-    }, [solutions]);
+        const currentSolutions = form.watch("solutions") || [];
+        setSolutions(currentSolutions);
+
+        // Only auto-generate timelines if they don't exist yet or need updating
+        const currentTimelines = form.watch("timelines") || [];
+
+        if (currentSolutions.length > 0) {
+            // Create or update timelines based on solutions
+            const updatedTimelines = currentSolutions.map((sol, idx) => {
+                const existingTimeline = currentTimelines[idx];
+                return {
+                    title: existingTimeline?.title || sol.title || `Timeline ${idx + 1}`,
+                    steps: existingTimeline?.steps?.length > 0
+                        ? existingTimeline.steps
+                        : [{ label: sol.title || "", desc: "" }]
+                };
+            });
+
+            setTimelines(updatedTimelines);
+            form.setValue("timelines", updatedTimelines);
+        } else {
+            // Clear timelines if no solutions
+            setTimelines([]);
+            form.setValue("timelines", []);
+        }
+    }, [form.watch("solutions")]);
+
+    // Separate effect to sync timelines state with form when data is loaded
+    useEffect(() => {
+        const currentTimelines = form.watch("timelines") || [];
+        if (JSON.stringify(currentTimelines) !== JSON.stringify(timelines)) {
+            setTimelines(currentTimelines);
+        }
+    }, [form.watch("timelines")]);
+
+    // Timeline handlers
+    const updateTimelineTitle = (timelineIdx: number, title: string) => {
+        const newTimelines = [...timelines];
+        newTimelines[timelineIdx] = { ...newTimelines[timelineIdx], title };
+        setTimelines(newTimelines);
+        form.setValue("timelines", newTimelines);
+    };
+
+    const updateTimelineStep = (timelineIdx: number, stepIdx: number, field: 'label' | 'desc', value: string) => {
+        const newTimelines = [...timelines];
+        newTimelines[timelineIdx].steps[stepIdx] = {
+            ...newTimelines[timelineIdx].steps[stepIdx],
+            [field]: value
+        };
+        setTimelines(newTimelines);
+        form.setValue("timelines", newTimelines);
+    };
+
+    const addTimelineStep = (timelineIdx: number) => {
+        const newTimelines = [...timelines];
+        newTimelines[timelineIdx].steps.push({ label: "", desc: "" });
+        setTimelines(newTimelines);
+        form.setValue("timelines", newTimelines);
+    };
+
+    const removeTimelineStep = (timelineIdx: number, stepIdx: number) => {
+        const newTimelines = [...timelines];
+        newTimelines[timelineIdx].steps = newTimelines[timelineIdx].steps.filter((_, i) => i !== stepIdx);
+        setTimelines(newTimelines);
+        form.setValue("timelines", newTimelines);
+    };
 
     const [newSolution, setNewSolution] = useState({
         title: "",
@@ -375,7 +428,7 @@ export default function EditProposalPage() {
 
         // Get the current form title value
         const currentFormTitle = data.title.trim();
-        
+
         // Extract the raw title from the original stored title
         let originalRawTitle = originalTitle;
         const expectedPrefix = `Reaiv × ${data.client_name} | `;
@@ -474,6 +527,8 @@ export default function EditProposalPage() {
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
+
+                            {/* Logo Upload */}
                             <div className="flex items-center gap-1">
                                 <FormLabel className="text-md">Logo (Image)</FormLabel>
                                 <span className="text-red-500 text-sm font-semibold">*</span>
@@ -520,7 +575,8 @@ export default function EditProposalPage() {
                                 </div>
                             </FormControl>
                             <FormMessage />
-                            {/* Preview */}
+
+                            {/* Logo Preview */}
                             {form.watch("logo_base64") && (
                                 <div className="mt-4 flex flex-col items-center">
                                     <img
@@ -540,6 +596,8 @@ export default function EditProposalPage() {
                                     </Button>
                                 </div>
                             )}
+
+                            {/* Hero Section */}
                             <Card className="p-6 border border-slate-300 rounded-xl bg-white mb-8">
                                 <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Hero Section</h3>
                                 <div className="grid md:grid-cols-2 gap-4">
@@ -566,6 +624,7 @@ export default function EditProposalPage() {
                                         </FormControl>
                                     </FormItem>
                                 </div>
+
                                 <div className="mt-6">
                                     <FormLabel className="mb-2 block">Add Highlight</FormLabel>
                                     <div className="grid md:grid-cols-2 gap-4 mb-4">
@@ -857,46 +916,51 @@ export default function EditProposalPage() {
                                 ))}
                             </div>
 
-                            {/* Timelines */}
-                            {(form.watch("solutions") ?? []).length > 0 ? (
+                            {/* Fixed Timelines Section */}
+                            {solutions.length > 0 ? (
                                 <div className="mb-8">
                                     <FormLabel className="mb-2 block text-md">Timelines</FormLabel>
-                                    {(form.watch("timelines") ?? []).map((timeline, timelineIdx) => (
-                                        <Card key={timelineIdx} className="p-4 mb-8 border border-slate-200 rounded-xl bg-white/80">
-                                            <div className="mb-2 font-bold text-[#8CE232]">{timeline.title || `Timeline ${timelineIdx + 1}`}</div>
-                                            {(timeline.steps ?? []).map((step, stepIdx) => (
-                                                <div key={stepIdx} className="grid md:grid-cols-2 gap-4 mb-2 items-center">
+                                    {timelines.map((timeline, timelineIdx) => (
+                                        <Card key={timelineIdx} className="p-4 mb-4 border border-slate-200 rounded-xl bg-white/80">
+                                            {/* Timeline Title */}
+                                            <FormItem className="mb-4">
+                                                <FormLabel>Timeline Title</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="text"
+                                                        value={timeline.title || ""}
+                                                        onChange={e => updateTimelineTitle(timelineIdx, e.target.value)}
+                                                        placeholder={`Timeline ${timelineIdx + 1} title`}
+                                                        className="bg-white font-bold text-[#8CE232]"
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+
+                                            {/* Timeline Steps */}
+                                            {timeline.steps.map((step, stepIdx) => (
+                                                <div key={stepIdx} className="grid md:grid-cols-2 gap-4 mb-4 items-end">
                                                     <FormItem>
-                                                        <FormLabel>Step Name</FormLabel>
+                                                        <FormLabel>Step {stepIdx + 1} Name</FormLabel>
                                                         <FormControl>
                                                             <Input
                                                                 type="text"
-                                                                value={step.label}
-                                                                onChange={e => {
-                                                                    const newTimelines = [...form.watch("timelines")];
-                                                                    newTimelines[timelineIdx].steps[stepIdx].label = e.target.value;
-                                                                    setTimelines(newTimelines);
-                                                                    form.setValue("timelines", newTimelines);
-                                                                }}
+                                                                value={step.label || ""}
+                                                                onChange={e => updateTimelineStep(timelineIdx, stepIdx, 'label', e.target.value)}
                                                                 placeholder="Timeline step name"
                                                                 className="bg-white"
                                                             />
                                                         </FormControl>
                                                     </FormItem>
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex items-end gap-2">
                                                         <FormItem className="flex-1">
-                                                            <FormLabel>Step Description</FormLabel>
+                                                            <FormLabel>Step {stepIdx + 1} Description</FormLabel>
                                                             <FormControl>
                                                                 <Textarea
-                                                                    value={step.desc}
-                                                                    onChange={e => {
-                                                                        const newTimelines = [...form.watch("timelines")];
-                                                                        newTimelines[timelineIdx].steps[stepIdx].desc = e.target.value;
-                                                                        setTimelines(newTimelines);
-                                                                        form.setValue("timelines", newTimelines);
-                                                                    }}
+                                                                    value={step.desc || ""}
+                                                                    onChange={e => updateTimelineStep(timelineIdx, stepIdx, 'desc', e.target.value)}
                                                                     placeholder="Add timeline details"
                                                                     className="bg-white"
+                                                                    rows={2}
                                                                 />
                                                             </FormControl>
                                                         </FormItem>
@@ -906,12 +970,7 @@ export default function EditProposalPage() {
                                                             size="icon"
                                                             className="text-red-400 hover:bg-red-100"
                                                             disabled={timeline.steps.length === 1}
-                                                            onClick={() => {
-                                                                const newTimelines = [...form.watch("timelines")];
-                                                                newTimelines[timelineIdx].steps = newTimelines[timelineIdx].steps.filter((_, i) => i !== stepIdx);
-                                                                setTimelines(newTimelines);
-                                                                form.setValue("timelines", newTimelines);
-                                                            }}
+                                                            onClick={() => removeTimelineStep(timelineIdx, stepIdx)}
                                                             aria-label="Remove Step"
                                                         >
                                                             <MinusCircle size={18} />
@@ -919,20 +978,17 @@ export default function EditProposalPage() {
                                                     </div>
                                                 </div>
                                             ))}
+
+                                            {/* Add Step Button */}
                                             <Button
                                                 type="button"
                                                 variant="outline"
                                                 size="sm"
                                                 className="mt-2 flex gap-1 items-center bg-[#eaffd0] text-[#8CE232] border-[#8CE232] hover:bg-[#8CE232]/10"
-                                                onClick={() => {
-                                                    const newTimelines = [...form.watch("timelines")];
-                                                    newTimelines[timelineIdx].steps.push({ label: "", desc: "" });
-                                                    setTimelines(newTimelines);
-                                                    form.setValue("timelines", newTimelines);
-                                                }}
+                                                onClick={() => addTimelineStep(timelineIdx)}
                                             >
                                                 <Plus size={16} />
-                                                Add Step
+                                                Add Step to {timeline.title || `Timeline ${timelineIdx + 1}`}
                                             </Button>
                                         </Card>
                                     ))}
@@ -940,7 +996,7 @@ export default function EditProposalPage() {
                             ) : (
                                 <>
                                     <FormLabel className="mb-2 block">Timelines</FormLabel>
-                                    <div className="mb-8 text-center text-slate-500">
+                                    <div className="mb-8 text-center text-slate-500 p-6 border border-slate-200 rounded-xl bg-slate-50">
                                         No timelines available. Please add a solution first.
                                     </div>
                                 </>
@@ -958,7 +1014,7 @@ export default function EditProposalPage() {
                                 </FormLabel>
                             </div>
 
-                            {/* Updated Pricing Section */}
+                            {/* Pricing Section */}
                             {showPrice && (
                                 <div className="mb-8">
                                     <Card className="p-6 border border-slate-300 rounded-xl bg-white">
@@ -1157,6 +1213,7 @@ export default function EditProposalPage() {
                             )}
                         </div>
                     </div>
+
                     {/* Hero Section */}
                     <section id="top" className="relative overflow-hidden py-[70px]">
                         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#8CE232]/20 via-white to-emerald-50"></div>
@@ -1192,24 +1249,28 @@ export default function EditProposalPage() {
                             </ul>
                         </div>
                     </section>
+
                     {/* Overview Section */}
-                    <section id="overview" className="py-16 bg-white border-t border-b border-slate-200">
-                        <div className="max-w-5xl mx-auto px-6 text-center">
-                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Overview</h2>
-                            <p className="mt-4 text-slate-600 leading-relaxed max-w-3xl mx-auto">
+                    <section id="overview" className="py-12 md:py-16 bg-white border-t border-b border-slate-200">
+                        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
+                            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">Overview</h2>
+                            <p className="mt-3 md:mt-4 text-sm sm:text-base text-slate-600 leading-relaxed max-w-3xl mx-auto px-2">
                                 {form.watch("overview")}
                             </p>
                             {form.watch("overview_details.title")?.trim() && form.watch("overview_details.description")?.trim() && (
-                                <div className="mt-8 text-left bg-slate-50 border border-slate-200 rounded-xl p-5">
-                                    <h3 className="font-semibold">{form.watch("overview_details.title")}</h3>
-                                    <p className="mt-2 text-sm text-slate-600">
+                                <div className="mt-6 md:mt-8 text-left bg-slate-50 border border-slate-200 rounded-lg md:rounded-xl p-4 md:p-5 mx-2 sm:mx-0">
+                                    <h3 className="text-sm sm:text-base font-semibold text-slate-900">
+                                        {form.watch("overview_details.title")}
+                                    </h3>
+                                    <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
                                         {form.watch("overview_details.description")}
                                     </p>
                                     {form.watch("overview_details.items")?.length > 0 && (
-                                        <ul className="mt-2 text-sm text-slate-700 space-y-1 list-disc pl-4">
+                                        <ul className="mt-3 text-xs sm:text-sm text-slate-700 space-y-1.5 list-disc pl-4 sm:pl-5">
                                             {form.watch("overview_details.items").map((item: any, idx: number) => (
-                                                <li key={idx}>
-                                                    <strong>{item.label}:</strong> {item.text}
+                                                <li key={idx} className="leading-relaxed">
+                                                    <strong className="text-slate-900">{item.label}:</strong>{" "}
+                                                    <span className="text-slate-700">{item.text}</span>
                                                 </li>
                                             ))}
                                         </ul>
@@ -1218,37 +1279,40 @@ export default function EditProposalPage() {
                             )}
                         </div>
                     </section>
+
                     {/* Proposed Solutions Section */}
-                    <section id="services" className="py-16">
-                        <div className="max-w-7xl mx-auto px-6">
-                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
+                    <section id="services" className="py-12 sm:py-16">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">
                                 Proposed Solutions
                             </h2>
-                            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                                 {(form.watch("solutions") || []).map((card: any, idx: number) => (
-                                    <div key={idx} className="card rounded-2xl border border-[#8CE232] bg-white p-6 hover:scale-[1.01] transition-transform">
-                                        <h3 className="text-lg font-semibold">{card.title}</h3>
-                                        <p className="mt-2 text-sm text-slate-600">{card.description}</p>
-                                        <ul className="mt-4 text-sm text-slate-700 space-y-1 list-disc pl-4">
+                                    <div key={idx} className="card rounded-2xl border border-[#8CE232] bg-white p-4 sm:p-6 hover:scale-[1.01] transition-transform">
+                                        <h3 className="text-base sm:text-lg font-semibold">{card.title}</h3>
+                                        <p className="mt-2 text-xs sm:text-sm text-slate-600">{card.description}</p>
+                                        <ul className="mt-3 sm:mt-4 text-xs sm:text-sm text-slate-700 space-y-1 list-disc pl-4">
                                             {card.bullets.map((b: string, i: number) => (
                                                 <li key={i}>{b}</li>
                                             ))}
                                         </ul>
                                         {card.benefit && (
-                                            <p className="mt-4 text-xs text-slate-500"><strong>Benefit:</strong> {card.benefit}</p>
+                                            <p className="mt-3 sm:mt-4 text-xs text-slate-500"><strong>Benefit:</strong> {card.benefit}</p>
                                         )}
                                     </div>
                                 ))}
                             </div>
                         </div>
                     </section>
+
+                    {/* Pricing Section */}
                     {pricingTiers.length > 0 && (
-                        <section id="pricing" className="py-20 bg-white border-t border-b border-slate-200">
-                            <div className="max-w-7xl mx-auto px-6">
+                        <section id="pricing" className="py-16 sm:py-20 bg-white border-t border-b border-slate-200">
+                            <div className="max-w-7xl mx-auto px-4 sm:px-6">
                                 <div className="flex items-end justify-between flex-wrap gap-4">
                                     <div>
-                                        <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Pricing</h2>
-                                        <p className="mt-2 text-slate-600">
+                                        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">Pricing</h2>
+                                        <p className="mt-2 text-sm sm:text-base text-slate-600">
                                             Simple, transparent tiers. Pick what fits today—scale when you need more.
                                         </p>
                                     </div>
@@ -1258,22 +1322,22 @@ export default function EditProposalPage() {
                                 </div>
 
                                 {/* Dynamic Grid Layout based on number of tiers */}
-                                <div className={`mt-8 grid gap-6 ${pricingTiers.length === 1
-                                    ? 'grid-cols-1 max-w-sm mx-auto'
-                                    : pricingTiers.length === 2
-                                        ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto'
-                                        : pricingTiers.length === 3
-                                            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                                            : pricingTiers.length === 4
-                                                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
-                                                : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+                                <div className={`mt-8 grid gap-4 sm:gap-6 ${pricingTiers.length === 1
+                                        ? 'grid-cols-1 max-w-sm mx-auto' // Single card - centered and narrow
+                                        : pricingTiers.length === 2
+                                            ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto' // Two cards - responsive
+                                            : pricingTiers.length === 3
+                                                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' // Three cards - responsive breakpoints
+                                                : pricingTiers.length === 4
+                                                    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' // Four cards - 2x2 on tablet, 1x4 on desktop
+                                                    : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' // 5+ cards - multiple rows
                                     }`}>
                                     {pricingTiers.map((tier, idx) => (
                                         <div
                                             key={idx}
-                                            className={`relative block rounded-2xl border p-6 hover:shadow-lg transition-all duration-200 ${tier.highlighted
-                                                ? 'border-[#8CE232] bg-gradient-to-br from-white to-[#8CE232]/10 shadow-lg scale-105'
-                                                : 'border-slate-200 bg-white hover:border-slate-300'
+                                            className={`relative block rounded-2xl border p-4 sm:p-6 hover:shadow-lg transition-all duration-200 ${tier.highlighted
+                                                    ? 'border-[#8CE232] bg-gradient-to-br from-white to-[#8CE232]/10 shadow-lg scale-105'
+                                                    : 'border-slate-200 bg-white hover:border-slate-300'
                                                 } ${pricingTiers.length === 1 ? 'min-h-[400px]' : 'min-h-[350px]'
                                                 }`}
                                             aria-label={`${tier.name} Pricing`}
@@ -1353,65 +1417,109 @@ export default function EditProposalPage() {
                             </div>
                         </section>
                     )}
+
                     {/* Migration Process Section */}
-                    <section id="process" className="py-16">
-                        <div className="max-w-7xl mx-auto px-6">
-                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Migration & Delivery Process</h2>
-                            <div className="mt-8 grid lg:grid-cols-5 gap-6">
-                                {(form.watch("migration_process") || []).map((step: any, idx: number) => (
-                                    <div key={idx} className="rounded-2xl border border-slate-200 p-6 bg-white">
-                                        <span className="text-xs font-medium text-[#8CE232]">Step {idx + 1}</span>
-                                        <h3 className="mt-1 font-semibold">{step.step}</h3>
-                                        <p className="mt-1 text-sm text-slate-600">{step.description}</p>
-                                    </div>
-                                ))}
+                    <section id="process" className="py-12 sm:py-16">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">Migration & Delivery Process</h2>
+                            <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+                                {(form.watch("migration_process") || []).map((process: any, idx: number) => {
+                                    if (!process.step || !process.description) return null;
+                                    return (
+                                        <div key={idx} className="rounded-2xl border border-slate-200 p-4 sm:p-6 bg-white">
+                                            <span className="text-xs font-medium text-[#8CE232]">Step {idx + 1}</span>
+                                            <h3 className="mt-1 text-sm sm:text-base font-semibold">{process.step}</h3>
+                                            <p className="mt-1 text-xs sm:text-sm text-slate-600">{process.description}</p>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </section>
+
                     {/* Timeline Section */}
-                    {(form.watch("solutions") ?? []).length > 0 && (
-                        <section id="timeline" className="py-16 bg-white border-t border-b border-slate-200">
-                            <div className="max-w-7xl mx-auto px-6">
-                                <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Projected Timeline</h2>
-                                <p className="mt-2 text-slate-600 text-sm">
-                                    Note: durations are estimates; we can compress or extend based on scope and feedback.
-                                </p>
-                                <div className="mt-10 grid md:grid-cols-3 gap-8">
-                                    {(form.watch("timelines") ?? []).length > 0 ? (
-                                        (form.watch("timelines") ?? []).map((timeline: any, idx: number) => (
-                                            <div key={idx} className="relative bg-white rounded-2xl border border-slate-200 p-6">
-                                                <div className="absolute left-0 top-6 bottom-6 w-1 bg-[#8CE232] rounded"></div>
-                                                <h3 className="text-lg font-semibold mb-4 pl-4">
-                                                    {timeline.title?.trim() ? timeline.title : `Timeline ${idx + 1}`}
-                                                </h3>
-                                                <ol className="mt-3 text-sm text-slate-700 space-y-4 pl-4">
-                                                    {(timeline.steps ?? []).length > 0 ? (
-                                                        timeline.steps.map((step: any, sidx: number) => (
-                                                            <li key={sidx}>
-                                                                <div className="font-medium text-slate-900">
-                                                                    {step.label?.trim() ? step.label : `Step ${sidx + 1}`}
-                                                                </div>
-                                                                <div className="text-slate-600">{step.desc}</div>
-                                                            </li>
-                                                        ))
-                                                    ) : (
-                                                        <li className="text-slate-400">No steps added.</li>
-                                                    )}
-                                                </ol>
+                    {timelines.length > 0 && (
+                        <section id="timeline" className="py-12 sm:py-16 bg-white border-t border-b border-slate-200">
+                            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">Project Timeline</h2>
+                                <div className="mt-6 sm:mt-8 space-y-8 sm:space-y-12">
+                                    {timelines.map((timeline: any, timelineIdx: number) => (
+                                        <div key={timelineIdx}>
+                                            <h3 className="text-lg sm:text-xl font-semibold text-[#8CE232] mb-4 sm:mb-6">
+                                                {timeline.title}
+                                            </h3>
+                                            <div className="space-y-4 sm:space-y-6">
+                                                {timeline.steps.map((step: any, stepIdx: number) => {
+                                                    if (!step.label || !step.desc) return null;
+                                                    return (
+                                                        <div key={stepIdx} className="flex gap-3 sm:gap-4">
+                                                            <div className="flex-shrink-0 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                                                                {stepIdx + 1}
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-base sm:text-lg font-semibold text-slate-900">{step.label}</h4>
+                                                                <p className="mt-1 text-xs sm:text-sm text-slate-600">{step.desc}</p>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
-                                        ))
-                                    ) : (
-                                        <div className="col-span-3 text-center text-slate-500 py-8">
-                                            No timelines available. Please add a solution first.
                                         </div>
-                                    )}
+                                    ))}
                                 </div>
                             </div>
                         </section>
                     )}
+
+                    {/* Contact Section */}
+                    <section id="contact" className="py-12 sm:py-16 bg-slate-900 text-white">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
+                            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">Ready to Get Started?</h2>
+                            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-slate-300 max-w-2xl mx-auto">
+                                Let's discuss your project requirements and create something amazing together.
+                            </p>
+                            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
+                                <a
+                                    href="mailto:hello@reaiv.com"
+                                    className="bg-[#8CE232] text-black px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold hover:bg-[#7ab33a] transition-colors text-sm sm:text-base"
+                                >
+                                    Contact Us
+                                </a>
+                                <div className="text-xs sm:text-sm text-slate-400">
+                                    <p>Email: hello@reaiv.com</p>
+                                    <p className="mt-1">Phone: +63 917 123 4567</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     {/* Footer */}
-                    <footer className="py-8 border-t border-slate-200 text-center text-xs text-slate-500">
-                        © {new Date().getFullYear()} Reaiv — Automation & Software Development
+                    <footer className="bg-black py-6 sm:py-8">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src="/resources/images/reaiv-logo.png"
+                                        alt="Reaiv logo"
+                                        className="h-8 w-auto"
+                                    />
+                                    <span className="text-xs sm:text-sm text-slate-400">
+                                        © 2024 Reaiv. All rights reserved.
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-4 text-xs sm:text-sm text-slate-400">
+                                    <a href="https://www.reaiv.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                                        Website
+                                    </a>
+                                    <a href="https://www.reaiv.com/portfolio" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                                        Portfolio
+                                    </a>
+                                    <a href="mailto:hello@reaiv.com" className="hover:text-white transition-colors">
+                                        Contact
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </footer>
                 </div>
             </div>
