@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -23,11 +23,16 @@ import { useFormContext } from "react-hook-form";
 import { Toaster, toast } from "sonner";
 import { InvoiceFormValues } from "@/types/invoice";
 
-export default function CreateInvoicePage() {
+export default function EditInvoicePage() {
     const router = useRouter();
+    const params = useParams();
+    const invoiceId = params.id as string;
+
     const [items, setItems] = useState<InvoiceFormValues["items"]>([
         { description: "", detailed_description: "", quantity: 1, rate: 0, amount: 0 }
     ]);
+    const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
 
     // Check if the user is logged in
     useEffect(() => {
@@ -49,7 +54,7 @@ export default function CreateInvoicePage() {
     const form = useForm<InvoiceFormValues>({
         defaultValues: {
             invoice_number: "",
-            issue_date: new Date().toISOString().split('T')[0],
+            issue_date: "",
             due_date: "",
             work_reference: "",
             bill_to_name: "",
@@ -77,36 +82,89 @@ export default function CreateInvoicePage() {
         },
     });
 
-    // Generate invoice number automatically
+    // Load invoice data
     useEffect(() => {
-        const generateInvoiceNumber = () => {
-            const year = new Date().getFullYear();
-            const month = String(new Date().getMonth() + 1).padStart(2, '0');
-            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-            return `REAIV-${year}-${month}-${random}`;
+        const loadInvoice = async () => {
+            if (!invoiceId) return;
+
+            try {
+                setLoading(true);
+                const res = await fetch(`/api/invoices/${invoiceId}`, {
+                    method: "GET",
+                    credentials: "include",
+                });
+
+                if (res.ok) {
+                    const { invoice, items: invoiceItems } = await res.json();
+
+                    // Process items to ensure they have the correct structure
+                    const processedItems = invoiceItems && invoiceItems.length > 0
+                        ? invoiceItems.map((item: any) => ({
+                            description: item.description || "",
+                            detailed_description: item.detailed_description || "",
+                            quantity: Number(item.quantity) || 1,
+                            rate: Number(item.rate) || 0,
+                            amount: Number(item.amount) || 0,
+                        }))
+                        : [{ description: "", detailed_description: "", quantity: 1, rate: 0, amount: 0 }];
+
+                    // Set items state first
+                    setItems(processedItems);
+
+                    // Then set form values
+                    form.reset({
+                        invoice_number: invoice.invoice_number || "",
+                        issue_date: invoice.issue_date || "",
+                        due_date: invoice.due_date || "",
+                        work_reference: invoice.work_reference || "",
+                        bill_to_name: invoice.bill_to_name || "",
+                        bill_to_title: invoice.bill_to_title || "",
+                        bill_to_address: invoice.bill_to_address || "",
+                        bill_to_email: invoice.bill_to_email || "",
+                        bill_to_phone: invoice.bill_to_phone || "",
+                        service_type: invoice.service_type || "",
+                        projects: invoice.projects || "",
+                        billing_basis: invoice.billing_basis || "",
+                        payment_method: invoice.payment_method || "Bank Transfer",
+                        currency: invoice.currency || "PHP",
+                        service_notes: invoice.service_notes || "",
+                        subtotal: Number(invoice.subtotal) || 0,
+                        tax_amount: Number(invoice.tax_amount) || 0,
+                        total_amount: Number(invoice.total_amount) || 0,
+                        payment_due_date: invoice.payment_due_date || "",
+                        payment_reference: invoice.payment_reference || "",
+                        bank_name: invoice.bank_name || "",
+                        account_name: invoice.account_name || "",
+                        account_number: invoice.account_number || "",
+                        country: invoice.country || "Philippines",
+                        status: invoice.status || "pending",
+                        items: processedItems
+                    });
+
+                    console.log("Loaded invoice items:", processedItems); // Debug log
+                } else {
+                    const errorData = await res.json();
+                    toast.error(errorData.error || "Failed to load invoice.");
+                    router.push("/dashboard/listing");
+                }
+            } catch (error) {
+                console.error("Error loading invoice:", error);
+                toast.error("An error occurred while loading the invoice.");
+                router.push("/dashboard/listing");
+            } finally {
+                setLoading(false);
+            }
         };
 
-        const generateWorkReference = () => {
-            const year = new Date().getFullYear();
-            const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
-            const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
-            return `WR-${year}-${timestamp}-${random}`;
-        };
+        loadInvoice();
+    }, [invoiceId, router]);
 
-        if (!form.watch("invoice_number")) {
-            form.setValue("invoice_number", generateInvoiceNumber());
-        }
-
-        if (!form.watch("work_reference")) {
-            form.setValue("work_reference", generateWorkReference());
-        }
-    }, []);
-
+    // Auto-generate payment reference from payment method and invoice number
     useEffect(() => {
         const paymentMethod = form.watch("payment_method");
         const invoiceNumber = form.watch("invoice_number");
 
-        if (paymentMethod && invoiceNumber) {
+        if (paymentMethod && invoiceNumber && !loading) {
             // Extract the payment method prefix (e.g., "Bank Transfer" -> "BT")
             const methodPrefix = paymentMethod
                 .split(' ')
@@ -125,26 +183,20 @@ export default function CreateInvoicePage() {
             // Update the form
             form.setValue("payment_reference", reference);
         }
-    }, [form.watch("payment_method"), form.watch("invoice_number")]);
+    }, [form.watch("payment_method"), form.watch("invoice_number"), loading]);
 
     // Calculate totals when items change
     useEffect(() => {
-        const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-        const taxAmount = form.watch("tax_amount") || 0;
-        const total = subtotal + taxAmount;
+        if (!loading) {
+            const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+            const taxAmount = form.watch("tax_amount") || 0;
+            const total = subtotal + taxAmount;
 
-        form.setValue("subtotal", subtotal);
-        form.setValue("total_amount", total);
-        form.setValue("items", items);
-    }, [items, form.watch("tax_amount")]);
-
-    // Set payment due date same as due date by default
-    useEffect(() => {
-        const dueDate = form.watch("due_date");
-        if (dueDate && !form.watch("payment_due_date")) {
-            form.setValue("payment_due_date", dueDate);
+            form.setValue("subtotal", subtotal);
+            form.setValue("total_amount", total);
+            form.setValue("items", items);
         }
-    }, [form.watch("due_date")]);
+    }, [items, form.watch("tax_amount"), loading]);
 
     // Item management functions
     const addNewItem = () => {
@@ -181,72 +233,76 @@ export default function CreateInvoicePage() {
 
     const handleSubmit = async (data: InvoiceFormValues) => {
         toast.dismiss();
+        setUpdating(true);
 
         // Validation
         if (items.length === 0 || items.some(item => !item.description.trim())) {
             toast.error("Please add at least one item with a description.");
+            setUpdating(false);
             return;
         }
 
         if (data.total_amount <= 0) {
             toast.error("Invoice total must be greater than zero.");
+            setUpdating(false);
             return;
         }
 
         // Validate required payment information
         if (!data.payment_method) {
             toast.error("Payment method is required.");
+            setUpdating(false);
             return;
         }
 
         if (!data.payment_due_date) {
             toast.error("Payment due date is required.");
+            setUpdating(false);
             return;
         }
 
         if (!data.bank_name) {
             toast.error("Bank name is required.");
+            setUpdating(false);
             return;
         }
 
         if (!data.account_name) {
             toast.error("Account name is required.");
+            setUpdating(false);
             return;
         }
 
         if (!data.account_number) {
             toast.error("Account number is required.");
+            setUpdating(false);
             return;
         }
 
         if (!data.country) {
             toast.error("Country is required.");
+            setUpdating(false);
             return;
         }
 
         try {
-            const res = await fetch("/api/invoices/create", {
-                method: "POST",
-                body: JSON.stringify(data),
+            const res = await fetch(`/api/invoices/${invoiceId}`, {
+                method: "PUT",
+                body: JSON.stringify({ ...data, id: invoiceId }),
                 headers: { "Content-Type": "application/json" },
             });
 
             if (res.ok) {
-                const result = await res.json();
-                const otpCode = result.otp?.code;
-                toast.success("Invoice created successfully!");
-                form.reset();
-                if (otpCode) {
-                    router.push(`/dashboard/invoice/confirmation?otp=${otpCode}`);
-                } else {
-                    router.push("/dashboard/listing");
-                }
+                toast.success("Invoice updated successfully!");
+                router.push("/dashboard/listing");
             } else {
                 const errorData = await res.json();
-                toast.error(errorData.error || "Failed to create invoice.");
+                toast.error(errorData.error || "Failed to update invoice.");
             }
         } catch (error) {
-            toast.error("An error occurred.");
+            toast.error("An error occurred while updating the invoice.");
+        } finally {
+            setUpdating(false);
         }
     };
 
@@ -266,6 +322,17 @@ export default function CreateInvoicePage() {
         }).format(amount || 0);
     };
 
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8CE232] mx-auto mb-4"></div>
+                    <p className="text-slate-600">Loading invoice...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
             <Toaster richColors position="top-center" />
@@ -283,7 +350,7 @@ export default function CreateInvoicePage() {
                             <ArrowLeft size={20} />
                         </Button>
                         <Receipt className="text-[#8CE232]" size={32} />
-                        <h2 className="text-3xl tracking-tighter font-bold text-slate-900">Create Invoice</h2>
+                        <h2 className="text-3xl tracking-tighter font-bold text-slate-900">Edit Invoice</h2>
                     </div>
 
                     <FormProvider {...form}>
@@ -297,20 +364,22 @@ export default function CreateInvoicePage() {
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <FormItem>
                                         <div className="flex items-center gap-1">
-                                            <FormLabel>Invoice Number (Auto Generated)</FormLabel>
+                                            <FormLabel>Invoice Number</FormLabel>
                                             <span className="text-red-500 text-sm font-semibold">*</span>
                                         </div>
                                         <FormControl>
                                             <Input
                                                 {...form.register("invoice_number", { required: true })}
-                                                placeholder="REAIV-2025-001" disabled className="bg-gray-100"
+                                                placeholder="REAIV-2025-001"
+                                                disabled
+                                                className="bg-gray-100"
                                             />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                     <FormItem>
                                         <div className="flex items-center gap-1">
-                                            <FormLabel>Work Reference (Auto Generated)</FormLabel>
+                                            <FormLabel>Work Reference</FormLabel>
                                             <span className="text-red-500 text-sm font-semibold">*</span>
                                         </div>
                                         <FormControl>
@@ -437,7 +506,10 @@ export default function CreateInvoicePage() {
                                     <FormItem>
                                         <FormLabel>Billing Basis</FormLabel>
                                         <FormControl>
-                                            <Select onValueChange={(value) => form.setValue("billing_basis", value)}>
+                                            <Select
+                                                value={form.watch("billing_basis")}
+                                                onValueChange={(value) => form.setValue("billing_basis", value)}
+                                            >
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select billing basis" />
                                                 </SelectTrigger>
@@ -454,7 +526,7 @@ export default function CreateInvoicePage() {
                                         <FormLabel>Currency</FormLabel>
                                         <FormControl>
                                             <Select
-                                                defaultValue="PHP"
+                                                value={form.watch("currency")}
                                                 onValueChange={(value) => form.setValue("currency", value)}
                                             >
                                                 <SelectTrigger>
@@ -626,7 +698,10 @@ export default function CreateInvoicePage() {
                                             <span className="text-red-500 text-sm font-semibold">*</span>
                                         </div>
                                         <FormControl>
-                                            <Select onValueChange={(value) => form.setValue("payment_method", value)}>
+                                            <Select
+                                                value={form.watch("payment_method")}
+                                                onValueChange={(value) => form.setValue("payment_method", value)}
+                                            >
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select payment method" />
                                                 </SelectTrigger>
@@ -661,7 +736,7 @@ export default function CreateInvoicePage() {
                                                 {...form.register("payment_reference")}
                                                 placeholder="Auto-generated reference"
                                                 className="bg-gray-50"
-                                                disabled
+                                                readOnly
                                             />
                                         </FormControl>
                                         <p className="text-xs text-slate-500 mt-1">
@@ -730,7 +805,7 @@ export default function CreateInvoicePage() {
                                     <FormLabel>Status</FormLabel>
                                     <FormControl>
                                         <Select
-                                            defaultValue="pending"
+                                            value={form.watch("status")}
                                             onValueChange={(value) => form.setValue("status", value)}
                                         >
                                             <SelectTrigger>
@@ -749,16 +824,26 @@ export default function CreateInvoicePage() {
                             {/* Submit Button */}
                             <Button
                                 type="submit"
+                                disabled={updating}
                                 className="w-full bg-[#8CE232] text-black font-bold py-6 rounded-lg hover:bg-[#8CE232]/90 transition-colors flex items-center justify-center gap-2"
                             >
-                                <Receipt size={20} />
-                                Create Invoice
+                                {updating ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+                                        Updating Invoice...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Receipt size={20} />
+                                        Update Invoice
+                                    </>
+                                )}
                             </Button>
                         </form>
                     </FormProvider>
                 </Card>
 
-                {/* Right: Live Preview - Exact 1:1 Design */}
+                {/* Right: Live Preview - Same as create page */}
                 <div className="bg-gray-100 rounded-2xl overflow-hidden shadow-xl">
                     <div className="max-w-4xl mx-auto bg-white shadow-lg h-full">
                         {/* Header */}
