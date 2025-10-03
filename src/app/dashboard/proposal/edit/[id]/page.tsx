@@ -476,9 +476,11 @@ export default function EditProposalPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Toaster richColors position="top-center" />
-                <span className="text-lg text-slate-500">Loading proposal...</span>
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8CE232] mx-auto mb-4"></div>
+                    <p className="text-slate-600">Loading Proposal...</p>
+                </div>
             </div>
         );
     }
@@ -1323,21 +1325,21 @@ export default function EditProposalPage() {
 
                                 {/* Dynamic Grid Layout based on number of tiers */}
                                 <div className={`mt-8 grid gap-4 sm:gap-6 ${pricingTiers.length === 1
-                                        ? 'grid-cols-1 max-w-sm mx-auto' // Single card - centered and narrow
-                                        : pricingTiers.length === 2
-                                            ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto' // Two cards - responsive
-                                            : pricingTiers.length === 3
-                                                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' // Three cards - responsive breakpoints
-                                                : pricingTiers.length === 4
-                                                    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' // Four cards - 2x2 on tablet, 1x4 on desktop
-                                                    : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' // 5+ cards - multiple rows
+                                    ? 'grid-cols-1 max-w-sm mx-auto' // Single card - centered and narrow
+                                    : pricingTiers.length === 2
+                                        ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto' // Two cards - responsive
+                                        : pricingTiers.length === 3
+                                            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' // Three cards - responsive breakpoints
+                                            : pricingTiers.length === 4
+                                                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' // Four cards - 2x2 on tablet, 1x4 on desktop
+                                                : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' // 5+ cards - multiple rows
                                     }`}>
                                     {pricingTiers.map((tier, idx) => (
                                         <div
                                             key={idx}
                                             className={`relative block rounded-2xl border p-4 sm:p-6 hover:shadow-lg transition-all duration-200 ${tier.highlighted
-                                                    ? 'border-[#8CE232] bg-gradient-to-br from-white to-[#8CE232]/10 shadow-lg scale-105'
-                                                    : 'border-slate-200 bg-white hover:border-slate-300'
+                                                ? 'border-[#8CE232] bg-gradient-to-br from-white to-[#8CE232]/10 shadow-lg scale-105'
+                                                : 'border-slate-200 bg-white hover:border-slate-300'
                                                 } ${pricingTiers.length === 1 ? 'min-h-[400px]' : 'min-h-[350px]'
                                                 }`}
                                             aria-label={`${tier.name} Pricing`}
@@ -1470,56 +1472,9 @@ export default function EditProposalPage() {
                             </div>
                         </section>
                     )}
-
-                    {/* Contact Section */}
-                    <section id="contact" className="py-12 sm:py-16 bg-slate-900 text-white">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
-                            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">Ready to Get Started?</h2>
-                            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-slate-300 max-w-2xl mx-auto">
-                                Let's discuss your project requirements and create something amazing together.
-                            </p>
-                            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
-                                <a
-                                    href="mailto:hello@reaiv.com"
-                                    className="bg-[#8CE232] text-black px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold hover:bg-[#7ab33a] transition-colors text-sm sm:text-base"
-                                >
-                                    Contact Us
-                                </a>
-                                <div className="text-xs sm:text-sm text-slate-400">
-                                    <p>Email: hello@reaiv.com</p>
-                                    <p className="mt-1">Phone: +63 917 123 4567</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
                     {/* Footer */}
-                    <footer className="bg-black py-6 sm:py-8">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
-                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <img
-                                        src="/resources/images/reaiv-logo.png"
-                                        alt="Reaiv logo"
-                                        className="h-8 w-auto"
-                                    />
-                                    <span className="text-xs sm:text-sm text-slate-400">
-                                        © 2024 Reaiv. All rights reserved.
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-4 text-xs sm:text-sm text-slate-400">
-                                    <a href="https://www.reaiv.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                                        Website
-                                    </a>
-                                    <a href="https://www.reaiv.com/portfolio" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                                        Portfolio
-                                    </a>
-                                    <a href="mailto:hello@reaiv.com" className="hover:text-white transition-colors">
-                                        Contact
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+                    <footer className="py-6 sm:py-8 border-t border-slate-200 text-center text-xs text-slate-500">
+                        © {new Date().getFullYear()} Reaiv — Automation & Software Development
                     </footer>
                 </div>
             </div>

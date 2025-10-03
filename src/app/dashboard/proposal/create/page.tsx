@@ -65,6 +65,7 @@ export default function CreateProposalPage() {
     const [showPrice, setShowPrice] = useState(false);
     const [pricingTiers, setPricingTiers] = useState<ProposalFormValues["pricing"]>([]);
     const router = useRouter();
+    const [isGenerating, setIsGenerating] = useState(false);
 
     // Check if the user is logged in
     useEffect(() => {
@@ -321,6 +322,71 @@ export default function CreateProposalPage() {
         setSolutions(prev => prev.filter((_, i) => i !== idx));
     };
 
+    const generateAIContent = async () => {
+        const proposalTitle = form.getValues("title");
+        const headline = form.getValues("hero.headline");
+
+        if (!proposalTitle.trim() || !headline.trim()) {
+            toast.error("Please fill in both Proposal Title and Headline first.");
+            return;
+        }
+
+        setIsGenerating(true);
+        toast.loading("Generating content with AI...");
+
+        try {
+            const response = await fetch('/api/openai/generate-content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    proposalTitle,
+                    headline,
+                }),
+            });
+
+            // Check if response is ok first
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error Response:', errorText);
+                throw new Error(`API Error: ${response.status} - ${errorText}`);
+            }
+
+            // Check content type
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const textResponse = await response.text();
+                console.error('Non-JSON Response:', textResponse);
+                throw new Error('Server returned non-JSON response. Check API route.');
+            }
+
+            const result = await response.json();
+
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to generate content');
+            }
+
+            // Set the generated content in the form
+            form.setValue("hero.subtitle", result.data.subtitle);
+            form.setValue("overview", result.data.overview);
+
+            toast.dismiss();
+            toast.success("Content generated successfully!");
+
+        } catch (error) {
+            console.error('AI Generation Error:', error);
+            toast.dismiss();
+            if (error instanceof Error) {
+                toast.error(error.message);
+            } else {
+                toast.error('Failed to generate content. Please try again.');
+            }
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const handleSubmit = async (data: ProposalFormValues) => {
         toast.dismiss();
 
@@ -479,17 +545,50 @@ export default function CreateProposalPage() {
                                         </FormControl>
                                     </FormItem>
                                     <FormItem>
-                                        <FormLabel>Subtitle</FormLabel>
+                                        <FormLabel>Subtitle (AI-Generated)</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="text"
                                                 {...form.register("hero.subtitle")}
-                                                placeholder="Hero subtitle"
+                                                placeholder="Subtitle will be AI-generated based on title and headline"
+                                                disabled
                                                 className="bg-white/80"
                                             />
                                         </FormControl>
                                     </FormItem>
                                 </div>
+
+                                {/* AI Generation Button with Animation */}
+                                <div className="overflow-hidden">
+                                    <div className={`transition-all duration-500 ease-in-out ${form.watch("title")?.trim() && form.watch("hero.headline")?.trim()
+                                        ? 'max-h-32 opacity-100 transform translate-y-0'
+                                        : 'max-h-0 opacity-0 transform -translate-y-4'
+                                        }`}>
+                                        <div className="mt-4 text-center">
+                                            <Button
+                                                type="button"
+                                                onClick={generateAIContent}
+                                                disabled={isGenerating}
+                                                className="bg-black text-[#8CE232] px-6 py-2 rounded-lg hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:bg-gray-600 transform hover:scale-105 active:scale-95 border border-[#00ff00]/20"
+                                            >
+                                                {isGenerating ? (
+                                                    <>
+                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#8CE232] mr-2"></div>
+                                                        Generating...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        ✨ Generate Subtitle & Overview with AI
+                                                    </>
+                                                )}
+                                            </Button>
+                                            <p className="text-xs text-slate-500 mt-2 transition-opacity duration-300">
+                                                AI will generate content based on your title and headline
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="mt-6">
                                     <FormLabel className="mb-2 block">Add Highlight</FormLabel>
                                     <div className="grid md:grid-cols-2 gap-4 mb-4">
@@ -583,13 +682,15 @@ export default function CreateProposalPage() {
                             {/* Overview */}
                             <FormItem>
                                 <div className="flex items-center gap-1">
-                                    <FormLabel className="text-md">Overview</FormLabel>
+                                    <FormLabel className="text-md">Overview (AI-Generated)</FormLabel>
                                     <span className="text-red-500 text-sm font-semibold">*</span>
                                 </div>
                                 <FormControl>
                                     <Textarea
                                         {...form.register("overview", { required: true })}
-                                        placeholder="Write a brief overview of the proposal"
+                                        disabled
+                                        placeholder="Overview will be AI-generated based on title and headline"
+                                        rows={6}
                                     />
                                 </FormControl>
                                 <FormMessage />
@@ -1122,8 +1223,8 @@ export default function CreateProposalPage() {
                     {/* Overview Section */}
                     <section id="overview" className="py-12 md:py-16 bg-white border-t border-b border-slate-200">
                         <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
-                            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">Overview</h2>
-                            <p className="mt-3 md:mt-4 text-sm sm:text-base text-slate-600 leading-relaxed max-w-3xl mx-auto px-2">
+                            <h2 className="text-xl sm:text-2xl md:text-5xl font-bold text-slate-900">Overview</h2>
+                            <p className="mt-3 md:mt-4 text-sm sm:text-base text-slate-600 leading-[2] max-w-3xl mx-auto px-2">
                                 {form.watch("overview")}
                             </p>
                             {form.watch("overview_details.title")?.trim() && form.watch("overview_details.description")?.trim() && (

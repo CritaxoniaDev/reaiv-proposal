@@ -163,6 +163,189 @@ export default function CreateInvoicePage() {
         }
     };
 
+    const clientDatabase = {
+        "Reaiv Solutions": {
+            bill_to_title: "Chief Technology Officer",
+            bill_to_email: "contact@reaivsolutions.com",
+            bill_to_phone: "+63 917 123 4567",
+            bill_to_address: "123 Innovation Street, Makati City, Metro Manila 1229, Philippines",
+            service_type: "Custom Software Development Services",
+            projects: "AI-Powered Business Automation Platform",
+            billing_basis: "Milestone Based",
+            currency: "PHP",
+            service_notes: "Full-stack development with AI integration and automation features",
+            // Payment information
+            bank_name: "BPI (Bank of the Philippine Islands)",
+            account_name: "REAIV Solutions Inc.",
+            account_number: "5363-4321-01",
+            country: "Philippines",
+            // Predefined items
+            items: [
+                {
+                    description: "AI Integration Development",
+                    detailed_description: "Custom AI model integration with business logic and automation workflows",
+                    quantity: 1,
+                    rate: 45000,
+                    amount: 45000
+                },
+                {
+                    description: "Frontend Development",
+                    detailed_description: "React/Next.js dashboard with responsive design and user management",
+                    quantity: 1,
+                    rate: 25000,
+                    amount: 25000
+                }
+            ]
+        },
+        "TechCorp Philippines": {
+            bill_to_title: "Project Manager",
+            bill_to_email: "pm@techcorp.ph",
+            bill_to_phone: "+63 998 765 4321",
+            bill_to_address: "456 Business Park Ave, BGC, Taguig City 1634, Philippines",
+            service_type: "Web Development & UX Design Services",
+            projects: "Corporate Website Redesign",
+            billing_basis: "Fixed Price",
+            currency: "PHP",
+            service_notes: "Responsive web design with modern UI/UX and CMS integration",
+            // Payment information
+            bank_name: "BDO Unibank",
+            account_name: "TechCorp Philippines",
+            account_number: "9876-5432-10",
+            country: "Philippines",
+            // Predefined items
+            items: [
+                {
+                    description: "Website Design & Development",
+                    detailed_description: "Complete website redesign with modern UI/UX and responsive layout",
+                    quantity: 1,
+                    rate: 35000,
+                    amount: 35000
+                },
+                {
+                    description: "CMS Integration",
+                    detailed_description: "Content management system setup and customization",
+                    quantity: 1,
+                    rate: 15000,
+                    amount: 15000
+                }
+            ]
+        },
+        "StartupHub Inc": {
+            bill_to_title: "Founder & CEO",
+            bill_to_email: "founder@startuphub.com",
+            bill_to_phone: "+63 905 888 9999",
+            bill_to_address: "789 Startup Boulevard, Ortigas Center, Pasig City 1605, Philippines",
+            service_type: "MVP Development Services",
+            projects: "Mobile App MVP Development",
+            billing_basis: "Hourly Rate",
+            currency: "USD",
+            service_notes: "Rapid prototyping and MVP development for mobile application",
+            // Payment information
+            bank_name: "Wise Pilipinas Inc.",
+            account_name: "StartupHub Inc.",
+            account_number: "US-1122-3344-5566",
+            country: "Philippines",
+            // Predefined items
+            items: [
+                {
+                    description: "Mobile App Development (80 hours)",
+                    detailed_description: "React Native mobile application with core features and basic UI/UX",
+                    quantity: 80,
+                    rate: 25,
+                    amount: 2000
+                },
+                {
+                    description: "API Development",
+                    detailed_description: "Backend API development with authentication and data management",
+                    quantity: 1,
+                    rate: 800,
+                    amount: 800
+                }
+            ]
+        },
+        "Digital Innovations Ltd": {
+            bill_to_title: "Head of Digital Strategy",
+            bill_to_email: "strategy@digitalinnovations.com",
+            bill_to_phone: "+63 912 555 7777",
+            bill_to_address: "321 Digital Hub, Alabang, Muntinlupa City 1780, Philippines",
+            service_type: "Digital Transformation Services",
+            projects: "Legacy System Migration & Modernization",
+            billing_basis: "Contingency Provision",
+            currency: "PHP",
+            service_notes: "Complete digital transformation including cloud migration and process automation",
+            // Payment information
+            bank_name: "Security Bank",
+            account_name: "Digital Innovations Ltd.",
+            account_number: "2468-1357-90",
+            country: "Philippines",
+            // Predefined items
+            items: [
+                {
+                    description: "System Analysis & Planning",
+                    detailed_description: "Comprehensive analysis of legacy systems and migration planning",
+                    quantity: 1,
+                    rate: 50000,
+                    amount: 50000
+                },
+                {
+                    description: "Cloud Migration Services",
+                    detailed_description: "Data migration and cloud infrastructure setup with security protocols",
+                    quantity: 1,
+                    rate: 75000,
+                    amount: 75000
+                }
+            ]
+        },
+        "Global Enterprises": {
+            bill_to_title: "IT Director",
+            bill_to_email: "it.director@globalenterprises.com",
+            bill_to_phone: "+63 928 444 3333",
+            bill_to_address: "555 Corporate Center, Cebu Business Park, Cebu City 6000, Philippines",
+            service_type: "Enterprise Software Solutions",
+            projects: "ERP System Integration",
+            billing_basis: "Milestone Based",
+            currency: "USD",
+            service_notes: "Enterprise-level software integration with custom modules and reporting",
+            // Payment information
+            bank_name: "Metrobank",
+            account_name: "Global Enterprises Corp.",
+            account_number: "1357-2468-00",
+            country: "Philippines",
+            // Predefined items
+            items: [
+                {
+                    description: "ERP System Integration",
+                    detailed_description: "Complete ERP system setup with custom modules and third-party integrations",
+                    quantity: 1,
+                    rate: 15000,
+                    amount: 15000
+                },
+                {
+                    description: "Custom Reporting Module",
+                    detailed_description: "Advanced reporting dashboard with analytics and data visualization",
+                    quantity: 1,
+                    rate: 8000,
+                    amount: 8000
+                }
+            ]
+        }
+    };
+
+    // Tax rate configuration
+    const TAX_RATE = 0.12; // 12% tax rate
+
+    // Calculate tax automatically when subtotal changes
+    useEffect(() => {
+        const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+        const calculatedTax = subtotal * TAX_RATE;
+        const total = subtotal + calculatedTax;
+
+        form.setValue("subtotal", subtotal);
+        form.setValue("tax_amount", calculatedTax);
+        form.setValue("total_amount", total);
+        form.setValue("items", items);
+    }, [items]);
+
     const updateItem = (index: number, field: keyof InvoiceFormValues["items"][0], value: any) => {
         setItems(prev => prev.map((item, i) => {
             if (i === index) {
@@ -177,6 +360,41 @@ export default function CreateInvoicePage() {
             }
             return item;
         }));
+    };
+
+    const handleClientNameChange = (clientName: string) => {
+        // Update the form field
+        form.setValue("bill_to_name", clientName);
+
+        // Check if client exists in database
+        const clientData = clientDatabase[clientName as keyof typeof clientDatabase];
+
+        if (clientData) {
+            // Auto-populate all related fields
+            form.setValue("bill_to_title", clientData.bill_to_title);
+            form.setValue("bill_to_email", clientData.bill_to_email);
+            form.setValue("bill_to_phone", clientData.bill_to_phone);
+            form.setValue("bill_to_address", clientData.bill_to_address);
+            form.setValue("service_type", clientData.service_type);
+            form.setValue("projects", clientData.projects);
+            form.setValue("billing_basis", clientData.billing_basis);
+            form.setValue("currency", clientData.currency);
+            form.setValue("service_notes", clientData.service_notes);
+
+            // Auto-populate payment information
+            form.setValue("bank_name", clientData.bank_name);
+            form.setValue("account_name", clientData.account_name);
+            form.setValue("account_number", clientData.account_number);
+            form.setValue("country", clientData.country);
+
+            // Auto-populate invoice items
+            if (clientData.items && clientData.items.length > 0) {
+                setItems(clientData.items);
+            }
+
+            // Show success toast
+            toast.success(`Complete client profile loaded for ${clientName}! Including items and payment details.`);
+        }
     };
 
     const handleSubmit = async (data: InvoiceFormValues) => {
@@ -363,19 +581,23 @@ export default function CreateInvoicePage() {
                                             <Input
                                                 {...form.register("bill_to_name", { required: true })}
                                                 placeholder="Client or company name"
+                                                onChange={(e) => handleClientNameChange(e.target.value)}
+                                                list="client-suggestions"
                                             />
                                         </FormControl>
-                                        <FormMessage />
                                     </FormItem>
+
                                     <FormItem>
                                         <FormLabel>Title/Position</FormLabel>
                                         <FormControl>
                                             <Input
                                                 {...form.register("bill_to_title")}
                                                 placeholder="Job title or position"
+                                                className={form.watch("bill_to_title") ? "bg-green-50 border-green-200" : ""}
                                             />
                                         </FormControl>
                                     </FormItem>
+
                                     <FormItem>
                                         <FormLabel>Email</FormLabel>
                                         <FormControl>
@@ -383,18 +605,22 @@ export default function CreateInvoicePage() {
                                                 type="email"
                                                 {...form.register("bill_to_email")}
                                                 placeholder="client@example.com"
+                                                className={form.watch("bill_to_email") ? "bg-green-50 border-green-200" : ""}
                                             />
                                         </FormControl>
                                     </FormItem>
+
                                     <FormItem>
                                         <FormLabel>Phone</FormLabel>
                                         <FormControl>
                                             <Input
                                                 {...form.register("bill_to_phone")}
                                                 placeholder="+63 XXX XXX XXXX"
+                                                className={form.watch("bill_to_phone") ? "bg-green-50 border-green-200" : ""}
                                             />
                                         </FormControl>
                                     </FormItem>
+
                                     <FormItem className="md:col-span-2">
                                         <FormLabel>Address</FormLabel>
                                         <FormControl>
@@ -402,6 +628,7 @@ export default function CreateInvoicePage() {
                                                 {...form.register("bill_to_address")}
                                                 placeholder="Complete billing address"
                                                 rows={3}
+                                                className={form.watch("bill_to_address") ? "bg-green-50 border-green-200" : ""}
                                             />
                                         </FormControl>
                                     </FormItem>
@@ -421,24 +648,31 @@ export default function CreateInvoicePage() {
                                             <Input
                                                 {...form.register("service_type", { required: true })}
                                                 placeholder="e.g., Software Development Services"
+                                                className={form.watch("service_type") ? "bg-green-50 border-green-200" : ""}
                                             />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
+
                                     <FormItem>
                                         <FormLabel>Projects</FormLabel>
                                         <FormControl>
                                             <Input
                                                 {...form.register("projects")}
                                                 placeholder="Project names or descriptions"
+                                                className={form.watch("projects") ? "bg-green-50 border-green-200" : ""}
                                             />
                                         </FormControl>
                                     </FormItem>
+
                                     <FormItem>
                                         <FormLabel>Billing Basis</FormLabel>
                                         <FormControl>
-                                            <Select onValueChange={(value) => form.setValue("billing_basis", value)}>
-                                                <SelectTrigger>
+                                            <Select
+                                                onValueChange={(value) => form.setValue("billing_basis", value)}
+                                                value={form.watch("billing_basis") || ""}
+                                            >
+                                                <SelectTrigger className={form.watch("billing_basis") ? "bg-green-50 border-green-200" : ""}>
                                                     <SelectValue placeholder="Select billing basis" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -450,14 +684,15 @@ export default function CreateInvoicePage() {
                                             </Select>
                                         </FormControl>
                                     </FormItem>
+
                                     <FormItem>
                                         <FormLabel>Currency</FormLabel>
                                         <FormControl>
                                             <Select
-                                                defaultValue="PHP"
                                                 onValueChange={(value) => form.setValue("currency", value)}
+                                                value={form.watch("currency") || "PHP"}
                                             >
-                                                <SelectTrigger>
+                                                <SelectTrigger className={form.watch("currency") !== "PHP" ? "bg-green-50 border-green-200" : ""}>
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -468,6 +703,7 @@ export default function CreateInvoicePage() {
                                             </Select>
                                         </FormControl>
                                     </FormItem>
+
                                     <FormItem className="md:col-span-2">
                                         <FormLabel>Service Notes</FormLabel>
                                         <FormControl>
@@ -475,6 +711,7 @@ export default function CreateInvoicePage() {
                                                 {...form.register("service_notes")}
                                                 placeholder="Additional notes about the services provided"
                                                 rows={3}
+                                                className={form.watch("service_notes") ? "bg-green-50 border-green-200" : ""}
                                             />
                                         </FormControl>
                                     </FormItem>
@@ -513,6 +750,7 @@ export default function CreateInvoicePage() {
                                                             value={item.description}
                                                             onChange={(e) => updateItem(index, "description", e.target.value)}
                                                             placeholder="Item description"
+                                                            className={item.description ? "bg-green-50 border-green-200" : ""}
                                                         />
                                                     </FormControl>
                                                 </FormItem>
@@ -524,6 +762,7 @@ export default function CreateInvoicePage() {
                                                             min="1"
                                                             value={item.quantity}
                                                             onChange={(e) => updateItem(index, "quantity", parseInt(e.target.value) || 1)}
+                                                            className={item.quantity > 1 ? "bg-green-50 border-green-200" : ""}
                                                         />
                                                     </FormControl>
                                                 </FormItem>
@@ -537,6 +776,7 @@ export default function CreateInvoicePage() {
                                                             value={item.rate}
                                                             onChange={(e) => updateItem(index, "rate", parseFloat(e.target.value) || 0)}
                                                             placeholder="0.00"
+                                                            className={item.rate > 0 ? "bg-green-50 border-green-200" : ""}
                                                         />
                                                     </FormControl>
                                                 </FormItem>
@@ -546,7 +786,7 @@ export default function CreateInvoicePage() {
                                                         <Input
                                                             value={formatCurrency(item.amount)}
                                                             disabled
-                                                            className="bg-gray-100"
+                                                            className="bg-gray-100 font-semibold"
                                                         />
                                                     </FormControl>
                                                 </FormItem>
@@ -558,6 +798,7 @@ export default function CreateInvoicePage() {
                                                             onChange={(e) => updateItem(index, "detailed_description", e.target.value)}
                                                             placeholder="Optional detailed description"
                                                             rows={2}
+                                                            className={item.detailed_description ? "bg-green-50 border-green-200" : ""}
                                                         />
                                                     </FormControl>
                                                 </FormItem>
@@ -577,9 +818,9 @@ export default function CreateInvoicePage() {
                                 </Button>
                             </Card>
 
-                            {/* Financial Summary */}
+                            {/* Financial Summary with Auto Tax Calculation */}
                             <Card className="p-6 border border-slate-300 rounded-xl bg-gradient-to-br from-green-50 to-transparent">
-                                <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Financial Summary</h3>
+                                <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Financial Summary <span className="text-xs text-slate-500">(Automatically calculated at 12% of subtotal)</span></h3>
                                 <div className="grid md:grid-cols-3 gap-4">
                                     <FormItem>
                                         <FormLabel>Subtotal</FormLabel>
@@ -592,14 +833,12 @@ export default function CreateInvoicePage() {
                                         </FormControl>
                                     </FormItem>
                                     <FormItem>
-                                        <FormLabel>Tax Amount</FormLabel>
+                                        <FormLabel>Tax Amount (12% VAT)</FormLabel>
                                         <FormControl>
                                             <Input
-                                                type="number"
-                                                step="0.01"
-                                                min="0"
-                                                {...form.register("tax_amount", { valueAsNumber: true })}
-                                                placeholder="0.00"
+                                                value={formatCurrency(form.watch("tax_amount"))}
+                                                disabled
+                                                className="bg-gray-100 font-semibold"
                                             />
                                         </FormControl>
                                     </FormItem>
@@ -614,9 +853,33 @@ export default function CreateInvoicePage() {
                                         </FormControl>
                                     </FormItem>
                                 </div>
+
+                                {/* Tax calculation breakdown */}
+                                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <h4 className="text-sm font-semibold text-blue-800 mb-2">Tax Calculation Breakdown</h4>
+                                    <div className="text-xs text-blue-700 space-y-1">
+                                        <div className="flex justify-between">
+                                            <span>Subtotal:</span>
+                                            <span>{formatCurrency(form.watch("subtotal"))}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Tax Rate:</span>
+                                            <span>{(TAX_RATE * 100)}%</span>
+                                        </div>
+                                        <div className="flex justify-between font-semibold">
+                                            <span>Tax Amount:</span>
+                                            <span>{formatCurrency(form.watch("tax_amount"))}</span>
+                                        </div>
+                                        <hr className="border-blue-300" />
+                                        <div className="flex justify-between font-bold">
+                                            <span>Total Amount:</span>
+                                            <span>{formatCurrency(form.watch("total_amount"))}</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </Card>
 
-                            {/* Payment Information */}
+                            {/* Payment Information - Enhanced with auto-populated bank details */}
                             <Card className="p-6 border border-slate-300 rounded-xl bg-white">
                                 <h3 className="text-lg font-semibold mb-4 text-[#8CE232]">Payment Information</h3>
                                 <div className="grid md:grid-cols-2 gap-4">
@@ -626,7 +889,10 @@ export default function CreateInvoicePage() {
                                             <span className="text-red-500 text-sm font-semibold">*</span>
                                         </div>
                                         <FormControl>
-                                            <Select onValueChange={(value) => form.setValue("payment_method", value)}>
+                                            <Select 
+                                                onValueChange={(value) => form.setValue("payment_method", value)}
+                                                value={form.watch("payment_method") || ""}
+                                            >
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select payment method" />
                                                 </SelectTrigger>
@@ -677,6 +943,7 @@ export default function CreateInvoicePage() {
                                             <Input
                                                 {...form.register("bank_name", { required: true })}
                                                 placeholder="e.g., BPI, BDO, Wise Pilipinas Inc."
+                                                className={form.watch("bank_name") ? "bg-green-50 border-green-200" : ""}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -690,6 +957,7 @@ export default function CreateInvoicePage() {
                                             <Input
                                                 {...form.register("account_name", { required: true })}
                                                 placeholder="Account holder name"
+                                                className={form.watch("account_name") ? "bg-green-50 border-green-200" : ""}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -703,6 +971,7 @@ export default function CreateInvoicePage() {
                                             <Input
                                                 {...form.register("account_number", { required: true })}
                                                 placeholder="Bank account number"
+                                                className={form.watch("account_number") ? "bg-green-50 border-green-200" : ""}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -716,6 +985,7 @@ export default function CreateInvoicePage() {
                                             <Input
                                                 {...form.register("country", { required: true })}
                                                 placeholder="Philippines"
+                                                className={form.watch("country") ? "bg-green-50 border-green-200" : ""}
                                             />
                                         </FormControl>
                                         <FormMessage />

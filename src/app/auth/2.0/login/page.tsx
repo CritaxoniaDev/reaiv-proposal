@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
+const BASE_URL = typeof window !== "undefined" ? window.location.origin : "";
+
 export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -27,7 +29,6 @@ export default function LoginPage() {
         toast.dismiss();
 
         try {
-            // Replace with your Supabase login logic
             const res = await fetch("/api/auth/login", {
                 method: "POST",
                 body: JSON.stringify(data),
@@ -36,8 +37,6 @@ export default function LoginPage() {
 
             if (res.ok) {
                 toast.success("Login successful!");
-
-                // Redirect to the dashboard listing page
                 router.push("/dashboard/listing");
             } else {
                 toast.error("Invalid email or password.");
@@ -50,51 +49,58 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 font-sans relative overflow-hidden">
+            {/* Decorative background shapes */}
+            <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
+                <div className="absolute -top-32 -left-32 w-96 h-96 bg-[#8CE232]/20 rounded-full blur-3xl"></div>
+                <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-black/10 rounded-full blur-2xl"></div>
+                <div className="absolute top-1/2 left-1/2 w-40 h-40 bg-[#8CE232]/10 rounded-full blur-xl -translate-x-1/2 -translate-y-1/2"></div>
+            </div>
             <Toaster richColors position="top-center" />
-            <Card className="rounded-2xl shadow-xl p-0 w-full max-w-2xl border border-slate-200 bg-white flex flex-col md:flex-row overflow-hidden">
+            <Card className="relative z-10 rounded-3xl shadow-2xl p-0 w-full max-w-3xl border border-slate-200 bg-white/90 flex flex-col md:flex-row overflow-hidden backdrop-blur-lg">
                 {/* Left: Logo and content */}
-                <div className="bg-black flex flex-col items-center justify-center px-8 py-10 md:w-1/2 w-full">
+                <div className="bg-gradient-to-br from-black via-slate-900 to-slate-800 flex flex-col items-center justify-center px-10 py-12 md:w-1/2 w-full">
                     <Image
                         src="/resources/images/reaiv-logo.png"
                         alt="Reaiv logo"
-                        width={180}
-                        height={90}
-                        className="mb-6"
+                        width={200}
+                        height={100}
+                        className="mb-8 drop-shadow-xl"
                         priority
                     />
-                    <h2 className="text-2xl font-bold text-[#8CE232] mb-2">Reaiv Proposals</h2>
-                    <p className="text-slate-300 text-center mb-4">
+                    <h2 className="text-3xl font-extrabold text-[#8CE232] mb-3 tracking-tight">Reaiv Proposals</h2>
+                    <p className="text-slate-300 text-center mb-6 text-lg font-medium">
                         Secure access to your proposal management system.<br />
                         Automation & Software Development for modern teams.
                     </p>
-                    <div className="mt-4 text-xs text-slate-500 text-center">
-                        &copy; {new Date().getFullYear()} Reaiv
+                    <div className="mt-6 text-xs text-slate-500 text-center">
+                        &copy; {new Date().getFullYear()} Reaiv. All rights reserved.
                     </div>
                 </div>
                 {/* Right: Login Form */}
-                <div className="flex flex-col justify-center px-8 py-10 md:w-1/2 w-full">
-                    <h2 className="text-2xl font-bold mb-6 text-center text-slate-900">Login</h2>
+                <div className="flex flex-col justify-center px-10 py-12 md:w-1/2 w-full bg-white/80">
+                    <h2 className="text-3xl font-bold mb-8 text-center text-slate-900 tracking-tight">Sign in to your account</h2>
                     <FormProvider {...form}>
                         <form
                             onSubmit={form.handleSubmit(handleLogin)}
-                            className="space-y-6"
+                            className="space-y-8"
                         >
                             <FormItem>
-                                <FormLabel>Email</FormLabel>
+                                <FormLabel className="text-slate-700 font-semibold">Email address</FormLabel>
                                 <FormControl>
                                     <Input
                                         type="email"
                                         {...form.register("email", { required: true })}
                                         disabled={loading}
                                         autoComplete="email"
-                                        placeholder="example@email.com"
+                                        placeholder="you@company.com"
+                                        className="bg-slate-50 border-slate-300 focus:border-[#8CE232] focus:ring-[#8CE232] text-lg"
                                     />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                             <FormItem>
-                                <FormLabel>Password</FormLabel>
+                                <FormLabel className="text-slate-700 font-semibold">Password</FormLabel>
                                 <FormControl>
                                     <Input
                                         type="password"
@@ -102,6 +108,7 @@ export default function LoginPage() {
                                         disabled={loading}
                                         autoComplete="current-password"
                                         placeholder="••••••••"
+                                        className="bg-slate-50 border-slate-300 focus:border-[#8CE232] focus:ring-[#8CE232] text-lg"
                                     />
                                 </FormControl>
                                 <FormMessage />
@@ -109,12 +116,19 @@ export default function LoginPage() {
                             <Button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-[#8CE232] cursor-pointer text-black font-bold py-2 rounded-lg hover:bg-[#8CE232]/90 transition-colors"
+                                className="w-full bg-[#8CE232] cursor-pointer text-black font-bold text-lg py-6 rounded-xl hover:bg-[#8CE232]/90 transition-all shadow-lg"
                             >
                                 {loading ? "Logging in..." : "Login"}
                             </Button>
                         </form>
                     </FormProvider>
+                    <div className="mt-8 text-center text-slate-500 text-sm">
+                        <span>Forgot your password?</span>
+                        <a href="#" className="ml-2 text-[#8CE232] font-semibold hover:underline">Reset here</a>
+                    </div>
+                    <div className="mt-4 text-center text-slate-400 text-xs">
+                        By signing in, you agree to our <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
+                    </div>
                 </div>
             </Card>
         </div>
