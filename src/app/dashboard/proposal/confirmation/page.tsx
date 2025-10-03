@@ -56,10 +56,32 @@ export default function ProposalConfirmationPage() {
         router.push("/dashboard/proposal/create");
     };
 
-    const handleViewProposal = () => {
+    const handleViewProposal = async () => {
         if (otpCode) {
-            // Open in new tab
-            window.open(`/proposal/${otpCode}`, '_blank');
+            try {
+                // Validate OTP and get the actual proposal ID
+                const res = await fetch("/api/auth/otp", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code: otpCode }),
+                });
+                const result = await res.json();
+
+                if (res.ok && result.success && result.id && result.type) {
+                    if (result.type === "proposal") {
+                        // Open proposal with actual ID in new tab
+                        window.open(`/proposal/${result.id}`, '_blank');
+                        toast.success("Opening proposal...");
+                    } else {
+                        toast.error("This code is not for a proposal.");
+                    }
+                } else {
+                    toast.error(result.error || "Invalid or expired code.");
+                }
+            } catch (error) {
+                toast.error("Failed to validate access code.");
+                console.error("OTP validation error:", error);
+            }
         }
     };
 
@@ -73,7 +95,7 @@ export default function ProposalConfirmationPage() {
                     <p className="text-slate-600 mb-6">
                         No OTP code found. Please create a proposal first.
                     </p>
-                    <Button 
+                    <Button
                         onClick={() => router.push("/dashboard/proposal/create")}
                         className="bg-[#8CE232] text-black font-bold hover:bg-[#8CE232]/90"
                     >
@@ -111,7 +133,7 @@ export default function ProposalConfirmationPage() {
                             <p className="text-sm text-slate-600 mb-4">
                                 Share this code with your client to access the proposal
                             </p>
-                            
+
                             <div className="bg-white border-2 border-[#8CE232] rounded-lg p-4 mb-4">
                                 <div className="font-mono text-2xl font-bold text-[#8CE232] tracking-wider">
                                     {otpCode}
