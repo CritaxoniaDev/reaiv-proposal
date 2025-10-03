@@ -8,6 +8,7 @@ export default function InvoicePage() {
     const params = useParams();
     const invoiceId = params?.id as string;
     const [invoice, setInvoice] = useState<Invoice | null>(null);
+    const [items, setItems] = useState<InvoiceItem[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -16,7 +17,11 @@ export default function InvoicePage() {
                 const res = await fetch(`/api/invoices/${invoiceId}`);
                 if (res.ok) {
                     const data = await res.json();
+                    // Set both invoice and items from the API response
                     setInvoice(data.invoice);
+                    setItems(data.items || []); // Set items separately
+                    console.log("Invoice data:", data.invoice);
+                    console.log("Items data:", data.items);
                 }
             } catch (error) {
                 console.error("Failed to fetch invoice:", error);
@@ -71,7 +76,7 @@ export default function InvoicePage() {
                             INVOICE
                         </div>
                         <div className="inline-block bg-[#91cd49] text-white px-8 py-4 rounded-lg text-3xl font-bold tracking-wide">
-                            REAIV 
+                            REAIV
                         </div>
                         <div className="grid grid-cols-2 gap-5 mt-8">
                             <div className="text-left">
@@ -164,22 +169,31 @@ export default function InvoicePage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {invoice.items.map((item) => (
-                                    <tr key={item.id}>
-                                        <td className="p-5 border-b border-gray-100 align-top">
-                                            <div className="font-semibold text-slate-700 mb-1">{item.description}</div>
-                                            {item.detailed_description && (
-                                                <div className="text-sm text-gray-600 leading-relaxed">{item.detailed_description}</div>
-                                            )}
+                                {/* Use items state instead of invoice.items */}
+                                {items.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={4} className="p-5 border-b border-gray-100 text-center text-gray-500">
+                                            No items found for this invoice
                                         </td>
-                                        <td className="p-5 border-b border-gray-100 text-center">{item.quantity}</td>
-                                        <td className="p-5 border-b border-gray-100 text-center">{formatCurrency(item.rate)}</td>
-                                        <td className="p-5 border-b border-gray-100 text-right">{formatCurrency(item.amount)}</td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    items.map((item) => (
+                                        <tr key={item.id}>
+                                            <td className="p-5 border-b border-gray-100 align-top">
+                                                <div className="font-semibold text-slate-700 mb-1">{item.description}</div>
+                                                {item.detailed_description && (
+                                                    <div className="text-sm text-gray-600 leading-relaxed">{item.detailed_description}</div>
+                                                )}
+                                            </td>
+                                            <td className="p-5 border-b border-gray-100 text-center">{item.quantity}</td>
+                                            <td className="p-5 border-b border-gray-100 text-center">{formatCurrency(item.rate)}</td>
+                                            <td className="p-5 border-b border-gray-100 text-right">{formatCurrency(item.amount)}</td>
+                                        </tr>
+                                    ))
+                                )}
                                 <tr className="bg-gray-50">
                                     <td colSpan={3} className="p-5 text-right font-semibold">Subtotal</td>
-                                    <td className="p-5 text-right font-semibold">{formatCurrency(invoice.subtotal)}</td>
+                                    <td className="p-5 text-right font-semibold">{formatCurrency(invoice.subtotal || invoice.total_amount)}</td>
                                 </tr>
                                 <tr className="bg-gray-50">
                                     <td colSpan={3} className="p-5 text-right font-semibold">Taxes</td>

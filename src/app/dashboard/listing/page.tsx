@@ -21,6 +21,629 @@ import { Toaster, toast } from "sonner";
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from "@/components/ui/select";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
+
+// Register fonts for better typography
+Font.register({
+    family: 'Helvetica',
+    fonts: [
+        { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2' }
+    ]
+});
+
+const styles = StyleSheet.create({
+    page: {
+        fontFamily: 'Helvetica',
+        fontSize: 8, // Reduced base font size
+        paddingTop: 0,
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingBottom: 0,
+        backgroundColor: '#ffffff',
+    },
+    // Header Section - Much more compact
+    header: {
+        backgroundColor: '#2c3e50',
+        color: '#ffffff',
+        padding: 15, // Reduced from 25
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+    },
+    headerLeft: {
+        flexDirection: 'column',
+    },
+    logo: {
+        backgroundColor: '#91cd49',
+        color: '#ffffff',
+        padding: '6 18', // Much smaller padding
+        borderRadius: 4,
+        fontSize: 18, // Reduced from 24
+        fontWeight: 'bold',
+        textTransform: 'lowercase',
+        letterSpacing: 0.3,
+        marginBottom: 12, // Reduced from 20
+        textAlign: 'center',
+        width: 80, // Reduced from 100
+    },
+    invoiceBadge: {
+        backgroundColor: 'transparent',
+        border: '1px solid #91cd49', // Thinner border
+        color: '#91cd49',
+        padding: '4 10', // Much smaller padding
+        borderRadius: 3,
+        fontSize: 8, // Reduced from 10
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
+        textAlign: 'center',
+        width: 50, // Reduced from 70
+    },
+    // Invoice Meta Grid - Very compact
+    invoiceMeta: {
+        marginTop: 12, // Reduced from 20
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8, // Reduced from 15
+    },
+    metaItem: {
+        width: '45%',
+        marginBottom: 6, // Reduced from 10
+    },
+    metaItemRight: {
+        width: '45%',
+        marginBottom: 6,
+        alignItems: 'flex-end',
+    },
+    metaLabel: {
+        fontSize: 7, // Reduced from 10
+        textTransform: 'uppercase',
+        letterSpacing: 0.3,
+        opacity: 0.7,
+        marginBottom: 2, // Reduced from 4
+        color: '#ffffff',
+    },
+    metaValue: {
+        fontSize: 10, // Reduced from 14
+        color: '#91cd49',
+        fontWeight: 'bold',
+    },
+    // Amount Due Section - Very compact
+    amountSection: {
+        backgroundColor: '#e8f5e9',
+        padding: '12 20', // Much smaller padding
+        textAlign: 'center',
+        borderBottom: '2px solid #91cd49', // Thinner border
+    },
+    amountLabel: {
+        fontSize: 9, // Reduced from 12
+        color: '#666666',
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
+        marginBottom: 4, // Reduced from 8
+    },
+    amountValue: {
+        fontSize: 28, // Reduced from 36
+        color: '#2c3e50',
+        fontWeight: 'bold',
+        marginVertical: 4, // Reduced from 8
+    },
+    dueDate: {
+        fontSize: 10, // Reduced from 14
+        color: '#666666',
+        marginTop: 4, // Reduced from 8
+    },
+    payButton: {
+        backgroundColor: '#91cd49',
+        color: '#ffffff',
+        padding: '6 20', // Much smaller padding
+        borderRadius: 3,
+        fontSize: 10, // Reduced from 14
+        fontWeight: 'bold',
+        marginTop: 8, // Reduced from 15
+        textAlign: 'center',
+        alignSelf: 'center',
+        width: 140, // Reduced from 180
+    },
+    // Invoice Body - Much smaller padding
+    content: {
+        padding: 15, // Reduced from 25
+        paddingBottom: 50, // Reduced space for footer
+    },
+    section: {
+        marginBottom: 15, // Reduced from 25
+    },
+    sectionTitle: {
+        fontSize: 10, // Reduced from 14
+        fontWeight: 'bold',
+        color: '#2c3e50',
+        textTransform: 'uppercase',
+        letterSpacing: 0.3,
+        marginBottom: 8, // Reduced from 15
+        paddingBottom: 4, // Reduced from 8
+        borderBottom: '1px solid #f0f0f0', // Thinner border
+    },
+    // Info Grid - Very compact
+    infoGrid: {
+        flexDirection: 'row',
+        gap: 20, // Reduced from 30
+    },
+    infoBlock: {
+        width: '48%',
+    },
+    infoBlockTitle: {
+        fontSize: 9, // Reduced from 12
+        fontWeight: 'bold',
+        color: '#666666',
+        marginBottom: 6, // Reduced from 12
+    },
+    infoText: {
+        fontSize: 7, // Reduced from 9
+        lineHeight: 1.2, // Reduced from 1.4
+        marginBottom: 2, // Reduced from 4
+        color: '#333333',
+    },
+    infoTextBold: {
+        fontSize: 7, // Reduced from 9
+        fontWeight: 'bold',
+        marginBottom: 2, // Reduced from 4
+        color: '#333333',
+    },
+    infoHighlight: {
+        color: '#91cd49',
+        fontWeight: 'bold',
+    },
+    infoNote: {
+        marginTop: 4, // Reduced from 8
+        fontStyle: 'italic',
+        color: '#666666',
+        fontSize: 6, // Reduced from 8
+        lineHeight: 1.2, // Reduced from 1.3
+    },
+    // Table Styles - Very compact
+    table: {
+        marginTop: 8, // Reduced from 15
+    },
+    tableHeader: {
+        backgroundColor: '#2c3e50',
+        color: '#ffffff',
+        flexDirection: 'row',
+        paddingVertical: 6, // Reduced from 10
+        paddingHorizontal: 8, // Reduced from 12
+    },
+    tableHeaderCell: {
+        fontSize: 7, // Reduced from 10
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        letterSpacing: 0.3,
+    },
+    tableHeaderDesc: { width: '55%' },
+    tableHeaderQty: { width: '15%', textAlign: 'center' },
+    tableHeaderRate: { width: '15%', textAlign: 'center' },
+    tableHeaderAmount: { width: '15%', textAlign: 'right' },
+    tableRow: {
+        flexDirection: 'row',
+        paddingVertical: 8, // Reduced from 12
+        paddingHorizontal: 8, // Reduced from 12
+        borderBottom: '1px solid #f0f0f0',
+    },
+    tableCell: {
+        fontSize: 7, // Reduced from 9
+        lineHeight: 1.2, // Reduced from 1.3
+        color: '#333333',
+    },
+    tableCellDesc: { width: '55%' },
+    tableCellQty: { width: '15%', textAlign: 'center' },
+    tableCellRate: { width: '15%', textAlign: 'center' },
+    tableCellAmount: { width: '15%', textAlign: 'right' },
+    itemDescription: {
+        fontWeight: 'bold',
+        color: '#2c3e50',
+        marginBottom: 2, // Reduced from 3
+        fontSize: 8, // Reduced from 10
+    },
+    itemDetail: {
+        fontSize: 6, // Reduced from 8
+        color: '#666666',
+        lineHeight: 1.2, // Reduced from 1.3
+    },
+    itemDetailBold: {
+        fontWeight: 'bold',
+    },
+    itemDetailItalic: {
+        fontStyle: 'italic',
+    },
+    // Summary Rows - Very compact
+    summaryRow: {
+        backgroundColor: '#f8f9fa',
+        flexDirection: 'row',
+        paddingVertical: 4, // Reduced from 8
+        paddingHorizontal: 8, // Reduced from 12
+        fontWeight: 'bold',
+    },
+    summaryLabel: {
+        width: '70%',
+        textAlign: 'right',
+        fontSize: 7, // Reduced from 9
+        color: '#333333',
+    },
+    summaryValue: {
+        width: '30%',
+        textAlign: 'right',
+        fontSize: 7, // Reduced from 9
+        color: '#333333',
+    },
+    grandTotalRow: {
+        backgroundColor: '#2c3e50',
+        color: '#ffffff',
+        flexDirection: 'row',
+        paddingVertical: 8, // Reduced from 12
+        paddingHorizontal: 8, // Reduced from 12
+        fontSize: 10, // Reduced from 14
+        fontWeight: 'bold',
+    },
+    grandTotalLabel: {
+        width: '70%',
+        textAlign: 'right',
+    },
+    grandTotalValue: {
+        width: '30%',
+        textAlign: 'right',
+    },
+    // Payment Information - Very compact
+    paymentSection: {
+        backgroundColor: '#fff8e1',
+        padding: 12, // Reduced from 20
+        borderRadius: 4, // Reduced from 8
+        marginTop: 10, // Reduced from 20
+    },
+    paymentTitle: {
+        fontSize: 9, // Reduced from 13
+        fontWeight: 'bold',
+        color: '#f57c00',
+        marginBottom: 8, // Reduced from 15
+    },
+    paymentInfo: {
+        fontSize: 7, // Reduced from 9
+        marginBottom: 3, // Reduced from 6
+        color: '#333333',
+        lineHeight: 1.2, // Reduced from 1.3
+    },
+    paymentInfoBold: {
+        fontWeight: 'bold',
+    },
+    referenceCode: {
+        backgroundColor: '#e8f5e9',
+        padding: '2 6', // Much smaller padding
+        borderRadius: 2,
+        fontFamily: 'Courier',
+        fontWeight: 'bold',
+        color: '#2c3e50',
+    },
+    // Payment Method Box - Very compact
+    paymentMethod: {
+        backgroundColor: '#ffffff',
+        padding: 8, // Reduced from 15
+        borderRadius: 3, // Reduced from 6
+        marginTop: 6, // Reduced from 12
+        border: '1px solid #ffe0b2',
+    },
+    paymentMethodTitle: {
+        color: '#2c3e50',
+        marginBottom: 6, // Reduced from 10
+        fontSize: 8, // Reduced from 11
+        fontWeight: 'bold',
+    },
+    paymentDetails: {
+        fontSize: 6, // Reduced from 8
+        lineHeight: 1.3, // Reduced from 1.4
+    },
+    paymentDetailRow: {
+        flexDirection: 'row',
+        marginBottom: 2, // Reduced from 4
+    },
+    paymentLabel: {
+        width: 60, // Reduced from 80
+        fontWeight: 'bold',
+        color: '#666666',
+    },
+    paymentValue: {
+        flex: 1,
+        color: '#333333',
+    },
+    // Note Box - Very compact
+    noteBox: {
+        backgroundColor: '#e3f2fd',
+        padding: 8, // Reduced from 15
+        borderLeft: '3px solid #2196f3', // Thinner border
+        borderRadius: 2, // Reduced from 4
+        marginTop: 8, // Reduced from 15
+        fontSize: 6, // Reduced from 8
+        lineHeight: 1.3, // Reduced from 1.4
+        color: '#333333',
+    },
+    noteTitle: {
+        fontWeight: 'bold',
+        marginBottom: 2, // Reduced from 4
+    },
+    // Footer - Much more compact
+    footer: {
+        backgroundColor: '#2c3e50',
+        color: '#ffffff',
+        padding: 8, // Reduced from 15
+        textAlign: 'center',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+    },
+    footerLogo: {
+        fontSize: 14, // Reduced from 20
+        fontWeight: 'bold',
+        color: '#91cd49',
+        marginBottom: 2, // Reduced from 5
+    },
+    footerSubtitle: {
+        fontSize: 8, // Reduced from 11
+        color: '#91cd49',
+        marginBottom: 2, // Reduced from 5
+    },
+    footerTagline: {
+        fontSize: 6, // Reduced from 9
+        opacity: 0.8,
+        letterSpacing: 0.3,
+        marginBottom: 2, // Reduced from 5
+    },
+    footerNote: {
+        fontSize: 5, // Reduced from 8
+        opacity: 0.6,
+    },
+});
+
+// Updated InvoicePDF component with more compact structure
+const InvoicePDF = ({ invoice, items, formatCurrency, formatDate }: any) => (
+    <Document>
+        <Page size="A4" style={styles.page}>
+            {/* Header - Very compact */}
+            <View style={styles.header}>
+                <View style={styles.headerLeft}>
+                    <View style={styles.logo}>
+                        <Text>reaiv</Text>
+                    </View>
+                    
+                    {/* Invoice Meta - 2x2 Grid - Compact */}
+                    <View style={styles.invoiceMeta}>
+                        <View style={styles.metaItem}>
+                            <Text style={styles.metaLabel}>Invoice Number</Text>
+                            <Text style={styles.metaValue}>{invoice.invoice_number}</Text>
+                        </View>
+                        <View style={styles.metaItemRight}>
+                            <Text style={[styles.metaLabel, { textAlign: 'right' }]}>Issue Date</Text>
+                            <Text style={[styles.metaValue, { textAlign: 'right' }]}>{formatDate(invoice.issue_date)}</Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                            <Text style={styles.metaLabel}>Work / Reference</Text>
+                            <Text style={styles.metaValue}>{invoice.work_reference || 'N/A'}</Text>
+                        </View>
+                        <View style={styles.metaItemRight}>
+                            <Text style={[styles.metaLabel, { textAlign: 'right' }]}>Due Date</Text>
+                            <Text style={[styles.metaValue, { textAlign: 'right' }]}>{formatDate(invoice.due_date)}</Text>
+                        </View>
+                    </View>
+                </View>
+                
+                <View style={styles.invoiceBadge}>
+                    <Text>INVOICE</Text>
+                </View>
+            </View>
+
+            {/* Amount Due Section - Very compact */}
+            <View style={styles.amountSection}>
+                <Text style={styles.amountLabel}>Amount Due ({invoice.currency})</Text>
+                <Text style={styles.amountValue}>{formatCurrency(invoice.total_amount, invoice.currency)}</Text>
+                <Text style={styles.dueDate}>Due {formatDate(invoice.payment_due_date || invoice.due_date)}</Text>
+                <View style={styles.payButton}>
+                    <Text>Pay {formatCurrency(invoice.total_amount, invoice.currency)}</Text>
+                </View>
+            </View>
+
+            {/* Invoice Body - Very compact content */}
+            <View style={styles.content}>
+                {/* Billing Information - Compact 2 column grid */}
+                <View style={styles.section}>
+                    <View style={styles.infoGrid}>
+                        <View style={styles.infoBlock}>
+                            <Text style={styles.infoBlockTitle}>BILLED TO</Text>
+                            <Text style={styles.infoTextBold}>{invoice.bill_to_name}</Text>
+                            {invoice.bill_to_title && <Text style={styles.infoText}>{invoice.bill_to_title}</Text>}
+                            {invoice.bill_to_address && <Text style={styles.infoText}>{invoice.bill_to_address}</Text>}
+                            {invoice.bill_to_email && (
+                                <Text style={styles.infoText}>
+                                    Email: <Text style={styles.infoHighlight}>{invoice.bill_to_email}</Text>
+                                </Text>
+                            )}
+                            {invoice.bill_to_phone && (
+                                <Text style={styles.infoText}>
+                                    Phone: <Text style={styles.infoHighlight}>{invoice.bill_to_phone}</Text>
+                                </Text>
+                            )}
+                        </View>
+
+                        <View style={styles.infoBlock}>
+                            <Text style={styles.infoBlockTitle}>SERVICE DETAILS</Text>
+                            <Text style={styles.infoText}>
+                                <Text style={styles.infoTextBold}>Service Type:</Text> {invoice.service_type}
+                            </Text>
+                            {invoice.projects && (
+                                <Text style={styles.infoText}>
+                                    <Text style={styles.infoTextBold}>Projects:</Text> {invoice.projects}
+                                </Text>
+                            )}
+                            {invoice.billing_basis && (
+                                <Text style={styles.infoText}>
+                                    <Text style={styles.infoTextBold}>Billing Basis:</Text> {invoice.billing_basis}
+                                </Text>
+                            )}
+                            {invoice.payment_method && (
+                                <Text style={styles.infoText}>
+                                    <Text style={styles.infoTextBold}>Payment Method:</Text> {invoice.payment_method}
+                                </Text>
+                            )}
+                            <Text style={styles.infoText}>
+                                <Text style={styles.infoTextBold}>Currency:</Text> {invoice.currency}
+                            </Text>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Invoice Items - Very compact table */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Invoice Items</Text>
+                    <View style={styles.table}>
+                        {/* Table Header */}
+                        <View style={styles.tableHeader}>
+                            <Text style={[styles.tableHeaderCell, styles.tableHeaderDesc]}>Description</Text>
+                            <Text style={[styles.tableHeaderCell, styles.tableHeaderQty]}>Qty</Text>
+                            <Text style={[styles.tableHeaderCell, styles.tableHeaderRate]}>Rate</Text>
+                            <Text style={[styles.tableHeaderCell, styles.tableHeaderAmount]}>Amount</Text>
+                        </View>
+
+                        {/* Table Rows */}
+                        {(!items || items.length === 0) ? (
+                            <View style={styles.tableRow}>
+                                <View style={styles.tableCellDesc}>
+                                    <Text style={styles.itemDescription}>Consolidated Payment — Contingency Provision</Text>
+                                    <Text style={styles.itemDetail}>
+                                        Per Development Contract ({invoice.work_reference || 'Contract Reference'}): USD demo milestone reallocated and added to the final PHP payment, resulting in a single{' '}
+                                        <Text style={styles.itemDetailBold}>{formatCurrency(invoice.total_amount, invoice.currency)}</Text> consolidated payout due on the{' '}
+                                        <Text style={styles.itemDetailItalic}>last calendar day</Text> of the signing month.
+                                    </Text>
+                                </View>
+                                <Text style={[styles.tableCell, styles.tableCellQty]}>1</Text>
+                                <Text style={[styles.tableCell, styles.tableCellRate]}>
+                                    {formatCurrency(invoice.total_amount, invoice.currency)}
+                                </Text>
+                                <Text style={[styles.tableCell, styles.tableCellAmount]}>
+                                    {formatCurrency(invoice.total_amount, invoice.currency)}
+                                </Text>
+                            </View>
+                        ) : (
+                            items.map((item: any, index: number) => (
+                                <View key={index} style={styles.tableRow}>
+                                    <View style={styles.tableCellDesc}>
+                                        <Text style={styles.itemDescription}>{item.description || 'Service Item'}</Text>
+                                        {item.detailed_description && (
+                                            <Text style={styles.itemDetail}>{item.detailed_description}</Text>
+                                        )}
+                                    </View>
+                                    <Text style={[styles.tableCell, styles.tableCellQty]}>{item.quantity || 1}</Text>
+                                    <Text style={[styles.tableCell, styles.tableCellRate]}>
+                                        {formatCurrency(item.rate || 0, invoice.currency)}
+                                    </Text>
+                                    <Text style={[styles.tableCell, styles.tableCellAmount]}>
+                                        {formatCurrency(item.amount || 0, invoice.currency)}
+                                    </Text>
+                                </View>
+                            ))
+                        )}
+
+                        {/* Summary Rows - Very compact */}
+                        <View style={styles.summaryRow}>
+                            <Text style={styles.summaryLabel}>Subtotal</Text>
+                            <Text style={styles.summaryValue}>
+                                {formatCurrency(invoice.subtotal || invoice.total_amount, invoice.currency)}
+                            </Text>
+                        </View>
+                        
+                        <View style={styles.summaryRow}>
+                            <Text style={styles.summaryLabel}>Taxes</Text>
+                            <Text style={styles.summaryValue}>
+                                {invoice.tax_amount > 0 ? formatCurrency(invoice.tax_amount, invoice.currency) : '—'}
+                            </Text>
+                        </View>
+                        
+                        <View style={styles.grandTotalRow}>
+                            <Text style={styles.grandTotalLabel}>Amount Due ({invoice.currency})</Text>
+                            <Text style={styles.grandTotalValue}>
+                                {formatCurrency(invoice.total_amount, invoice.currency)}
+                            </Text>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Payment Information - Very compact */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Payment Information</Text>
+                    <View style={styles.paymentSection}>
+                        <Text style={styles.paymentTitle}>{invoice.payment_method || 'Bank Transfer'}</Text>
+                        <Text style={styles.paymentInfo}>
+                            <Text style={styles.paymentInfoBold}>Payment Due:</Text> {formatDate(invoice.payment_due_date || invoice.due_date)}
+                        </Text>
+                        <Text style={styles.paymentInfo}>
+                            <Text style={styles.paymentInfoBold}>Reference:</Text>{' '}
+                            <View style={styles.referenceCode}>
+                                <Text>
+                                    {invoice.payment_reference || `${invoice.work_reference || 'Contract'} — Consolidated Payment`}
+                                </Text>
+                            </View>
+                        </Text>
+
+                        {/* Bank Details Box - Only if data exists - Very compact */}
+                        {(invoice.bank_name || invoice.account_name || invoice.account_number) && (
+                            <View style={styles.paymentMethod}>
+                                <Text style={styles.paymentMethodTitle}>Recipient Bank Details</Text>
+                                <View style={styles.paymentDetails}>
+                                    {invoice.bank_name && (
+                                        <View style={styles.paymentDetailRow}>
+                                            <Text style={styles.paymentLabel}>Bank Name:</Text>
+                                            <Text style={styles.paymentValue}>{invoice.bank_name}</Text>
+                                        </View>
+                                    )}
+                                    {invoice.account_name && (
+                                        <View style={styles.paymentDetailRow}>
+                                            <Text style={styles.paymentLabel}>Account Name:</Text>
+                                            <Text style={styles.paymentValue}>{invoice.account_name}</Text>
+                                        </View>
+                                    )}
+                                    {invoice.account_number && (
+                                        <View style={styles.paymentDetailRow}>
+                                            <Text style={styles.paymentLabel}>Account Number:</Text>
+                                            <Text style={styles.paymentValue}>{invoice.account_number}</Text>
+                                        </View>
+                                    )}
+                                    {invoice.country && (
+                                        <View style={styles.paymentDetailRow}>
+                                            <Text style={styles.paymentLabel}>Country:</Text>
+                                            <Text style={styles.paymentValue}>{invoice.country}</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            </View>
+                        )}
+                    </View>
+
+                    {/* Very compact Note Box */}
+                    <View style={styles.noteBox}>
+                        <Text style={styles.noteTitle}>Note:</Text>
+                        <Text>
+                            This invoice is issued under the contingency schedule defined in the signed agreement. 
+                            If the standard milestone schedule applies instead, please advise and a split invoice 
+                            (USD demo + PHP final) will be issued accordingly.
+                        </Text>
+                    </View>
+                </View>
+            </View>
+
+            {/* Footer - Very compact */}
+            <View style={styles.footer}>
+                <Text style={styles.footerLogo}>reaiv</Text>
+                <Text style={styles.footerSubtitle}>REAIV - Reimagine AI Ventures</Text>
+                <Text style={styles.footerTagline}>Think different. Build intelligent. Scale effortlessly.</Text>
+                <Text style={styles.footerNote}>This invoice was generated using the REAIV template format.</Text>
+            </View>
+        </Page>
+    </Document>
+);
 
 export default function DashboardListingPage() {
     const [data, setData] = useState<{
@@ -309,525 +932,6 @@ export default function DashboardListingPage() {
         });
         return lookup;
     }, [data.otps]);
-
-    const downloadInvoicePDF = async (invoice: any) => {
-        setDownloadingId(invoice.id);
-
-        try {
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-
-            const margin = 20;
-            const contentWidth = pageWidth - (margin * 2);
-            let yPosition = margin;
-
-            // Helper functions
-            const hexToRgb = (hex: string) => {
-                const r = parseInt(hex.slice(1, 3), 16);
-                const g = parseInt(hex.slice(3, 5), 16);
-                const b = parseInt(hex.slice(5, 7), 16);
-                return { r, g, b };
-            };
-
-            const addText = (text: string, x: number = margin, fontSize: number = 10, isBold: boolean = false, color: string = '#000000', align: 'left' | 'center' | 'right' = 'left') => {
-                pdf.setFontSize(fontSize);
-                pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
-                const rgb = hexToRgb(color);
-                pdf.setTextColor(rgb.r, rgb.g, rgb.b);
-
-                const lines = pdf.splitTextToSize(text, contentWidth);
-                pdf.text(lines, x, yPosition, { align });
-                yPosition += (lines.length * fontSize * 0.4) + 3;
-                return lines.length;
-            };
-
-            // Dark header background (slate-700)
-            pdf.setFillColor(51, 65, 85); // slate-700
-            pdf.rect(0, 0, pageWidth, 80, 'F');
-
-            // INVOICE badge (border + text)
-            yPosition = 25;
-            pdf.setDrawColor(145, 205, 73); // #91cd49
-            pdf.setLineWidth(1);
-            pdf.rect(margin, yPosition - 5, 30, 10, 'S');
-
-            pdf.setFontSize(8);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(145, 205, 73);
-            pdf.text('INVOICE', margin + 15, yPosition, { align: 'center' });
-
-            yPosition += 15;
-
-            // REAIV brand box (green background)
-            pdf.setFillColor(145, 205, 73); // #91cd49
-            pdf.rect(margin, yPosition - 5, 40, 15, 'F');
-
-            pdf.setFontSize(16);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(255, 255, 255);
-            pdf.text('REAIV', margin + 20, yPosition + 5, { align: 'center' });
-
-            yPosition += 25;
-
-            // Invoice details grid (2x2 layout)
-            const leftColX = margin;
-            const rightColX = pageWidth - margin - 60;
-
-            // Row 1
-            let detailY = yPosition;
-
-            // Invoice Number (left)
-            pdf.setFontSize(6);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(255, 255, 255, 0.7); // opacity effect
-            pdf.text('INVOICE NUMBER', leftColX, detailY);
-
-            pdf.setFontSize(9);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(145, 205, 73);
-            pdf.text(invoice.invoice_number || 'N/A', leftColX, detailY + 5);
-
-            // Issue Date (right)
-            pdf.setFontSize(6);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(255, 255, 255, 0.7);
-            pdf.text('ISSUE DATE', rightColX, detailY, { align: 'right' });
-
-            pdf.setFontSize(9);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(145, 205, 73);
-            pdf.text(new Date(invoice.issue_date).toLocaleDateString(), rightColX, detailY + 5, { align: 'right' });
-
-            detailY += 15;
-
-            // Work Reference (left)
-            pdf.setFontSize(6);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(255, 255, 255, 0.7);
-            pdf.text('WORK / REFERENCE', leftColX, detailY);
-
-            pdf.setFontSize(9);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(145, 205, 73);
-            const workRef = pdf.splitTextToSize(invoice.work_reference || 'N/A', 80);
-            pdf.text(workRef, leftColX, detailY + 5);
-
-            // Due Date (right)
-            pdf.setFontSize(6);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(255, 255, 255, 0.7);
-            pdf.text('DUE DATE', rightColX, detailY, { align: 'right' });
-
-            pdf.setFontSize(9);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(145, 205, 73);
-            pdf.text(new Date(invoice.due_date).toLocaleDateString(), rightColX, detailY + 5, { align: 'right' });
-
-            yPosition = 90;
-
-            // Amount Due Section (light green background)
-            pdf.setFillColor(240, 253, 244); // green-50
-            pdf.rect(0, yPosition, pageWidth, 40, 'F');
-
-            // Green border at bottom
-            pdf.setDrawColor(145, 205, 73);
-            pdf.setLineWidth(2);
-            pdf.line(0, yPosition + 40, pageWidth, yPosition + 40);
-
-            yPosition += 10;
-
-            // Amount Due label
-            pdf.setFontSize(8);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(107, 114, 128); // gray-600
-            pdf.text(`AMOUNT DUE (${invoice.currency})`, pageWidth / 2, yPosition, { align: 'center' });
-
-            yPosition += 8;
-
-            // Large amount
-            pdf.setFontSize(28);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(51, 65, 85); // slate-700
-            pdf.text(formatCurrency(invoice.total_amount, invoice.currency), pageWidth / 2, yPosition, { align: 'center' });
-
-            yPosition += 12;
-
-            // Due date
-            pdf.setFontSize(10);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(107, 114, 128);
-            pdf.text(`Due ${new Date(invoice.payment_due_date || invoice.due_date).toLocaleDateString()}`, pageWidth / 2, yPosition, { align: 'center' });
-
-            yPosition += 10;
-
-            // Pay button (visual representation)
-            pdf.setFillColor(145, 205, 73);
-            pdf.rect(pageWidth / 2 - 30, yPosition - 5, 60, 12, 'F');
-
-            pdf.setFontSize(10);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(255, 255, 255);
-            pdf.text(`Pay ${formatCurrency(invoice.total_amount, invoice.currency)}`, pageWidth / 2, yPosition + 2, { align: 'center' });
-
-            yPosition = 150;
-
-            // Billing Information Section
-            yPosition += 10;
-
-            // BILLED TO (left column)
-            pdf.setFontSize(8);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(107, 114, 128);
-            pdf.text('BILLED TO', margin, yPosition);
-
-            yPosition += 8;
-
-            pdf.setFontSize(10);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(0, 0, 0);
-            pdf.text(invoice.bill_to_name || 'N/A', margin, yPosition);
-            yPosition += 5;
-
-            pdf.setFont('helvetica', 'normal');
-            if (invoice.bill_to_title) {
-                pdf.text(invoice.bill_to_title, margin, yPosition);
-                yPosition += 5;
-            }
-            if (invoice.bill_to_address) {
-                pdf.text(invoice.bill_to_address, margin, yPosition);
-                yPosition += 5;
-            }
-            if (invoice.bill_to_email) {
-                pdf.text(`Email: `, margin, yPosition);
-                pdf.setFont('helvetica', 'bold');
-                pdf.setTextColor(145, 205, 73);
-                pdf.text(invoice.bill_to_email, margin + 15, yPosition);
-                yPosition += 5;
-            }
-            if (invoice.bill_to_phone) {
-                pdf.setFont('helvetica', 'normal');
-                pdf.setTextColor(0, 0, 0);
-                pdf.text(`Phone: `, margin, yPosition);
-                pdf.setFont('helvetica', 'bold');
-                pdf.setTextColor(145, 205, 73);
-                pdf.text(invoice.bill_to_phone, margin + 15, yPosition);
-                yPosition += 5;
-            }
-
-            // SERVICE DETAILS (right column)
-            const serviceY = 168;
-            let currentServiceY = serviceY;
-
-            pdf.setFontSize(8);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(107, 114, 128);
-            pdf.text('SERVICE DETAILS', pageWidth / 2 + 10, currentServiceY);
-
-            currentServiceY += 8;
-
-            pdf.setFontSize(10);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(0, 0, 0);
-
-            pdf.text('Service Type: ', pageWidth / 2 + 10, currentServiceY);
-            pdf.setFont('helvetica', 'bold');
-            pdf.text(invoice.service_type || 'N/A', pageWidth / 2 + 30, currentServiceY);
-            currentServiceY += 5;
-
-            if (invoice.projects) {
-                pdf.setFont('helvetica', 'normal');
-                pdf.text('Projects: ', pageWidth / 2 + 10, currentServiceY);
-                pdf.setFont('helvetica', 'bold');
-                pdf.text(invoice.projects, pageWidth / 2 + 25, currentServiceY);
-                currentServiceY += 5;
-            }
-
-            if (invoice.billing_basis) {
-                pdf.setFont('helvetica', 'normal');
-                pdf.text('Billing Basis: ', pageWidth / 2 + 10, currentServiceY);
-                pdf.setFont('helvetica', 'bold');
-                pdf.text(invoice.billing_basis, pageWidth / 2 + 30, currentServiceY);
-                currentServiceY += 5;
-            }
-
-            if (invoice.payment_method) {
-                pdf.setFont('helvetica', 'normal');
-                pdf.text('Payment Method: ', pageWidth / 2 + 10, currentServiceY);
-                pdf.setFont('helvetica', 'bold');
-                pdf.text(invoice.payment_method, pageWidth / 2 + 35, currentServiceY);
-                currentServiceY += 5;
-            }
-
-            pdf.setFont('helvetica', 'normal');
-            pdf.text('Currency: ', pageWidth / 2 + 10, currentServiceY);
-            pdf.setFont('helvetica', 'bold');
-            pdf.text(invoice.currency || 'PHP', pageWidth / 2 + 25, currentServiceY);
-
-            yPosition = Math.max(yPosition, currentServiceY) + 20;
-
-            // Invoice Items Section
-            pdf.setFontSize(12);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(51, 65, 85); // slate-700
-            pdf.text('INVOICE ITEMS', margin, yPosition);
-
-            // Underline
-            pdf.setDrawColor(229, 231, 235); // gray-200
-            pdf.setLineWidth(1);
-            pdf.line(margin, yPosition + 3, pageWidth - margin, yPosition + 3);
-
-            yPosition += 15;
-
-            // Table headers (dark background)
-            const tableStartY = yPosition;
-            const headerHeight = 12;
-
-            pdf.setFillColor(51, 65, 85); // slate-700
-            pdf.rect(margin, yPosition, contentWidth, headerHeight, 'F');
-
-            pdf.setFontSize(8);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(255, 255, 255);
-
-            const descX = margin + 3;
-            const qtyX = margin + (contentWidth * 0.55) + 5;
-            const rateX = margin + (contentWidth * 0.7) + 5;
-            const amountX = pageWidth - margin - 5;
-
-            pdf.text('DESCRIPTION', descX, yPosition + 7);
-            pdf.text('QTY', qtyX, yPosition + 7, { align: 'center' });
-            pdf.text('RATE', rateX, yPosition + 7, { align: 'center' });
-            pdf.text('AMOUNT', amountX, yPosition + 7, { align: 'right' });
-
-            yPosition += headerHeight;
-
-            pdf.setTextColor(0, 0, 0);
-            pdf.setFont('helvetica', 'normal');
-
-            // Safety check for invoice items
-            const invoiceItems = invoice.items || [];
-
-            if (invoiceItems.length === 0) {
-                // If no items, show a default row
-                const rowHeight = 15;
-
-                pdf.setFillColor(255, 255, 255);
-                pdf.rect(margin, yPosition, contentWidth, rowHeight, 'F');
-
-                // Border
-                pdf.setDrawColor(229, 231, 235);
-                pdf.line(margin, yPosition + rowHeight, pageWidth - margin, yPosition + rowHeight);
-
-                pdf.setFontSize(9);
-                pdf.setFont('helvetica', 'normal');
-                pdf.setTextColor(107, 114, 128); // gray text
-                pdf.text('No items specified', descX, yPosition + 6);
-                pdf.text('1', qtyX, yPosition + 6, { align: 'center' });
-                pdf.text(formatCurrency(invoice.total_amount || 0, invoice.currency), rateX, yPosition + 6, { align: 'center' });
-                pdf.text(formatCurrency(invoice.total_amount || 0, invoice.currency), amountX, yPosition + 6, { align: 'right' });
-
-                yPosition += rowHeight;
-            } else {
-                // Process actual items
-                invoiceItems.forEach((item: any, index: number) => {
-                    const rowHeight = 15;
-
-                    // Alternate row background
-                    if (index % 2 === 0) {
-                        pdf.setFillColor(255, 255, 255);
-                    } else {
-                        pdf.setFillColor(249, 250, 251);
-                    }
-                    pdf.rect(margin, yPosition, contentWidth, rowHeight, 'F');
-
-                    // Border
-                    pdf.setDrawColor(229, 231, 235);
-                    pdf.line(margin, yPosition + rowHeight, pageWidth - margin, yPosition + rowHeight);
-
-                    pdf.setFontSize(9);
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.setTextColor(51, 65, 85);
-                    pdf.text(item.description || 'Service Item', descX, yPosition + 6);
-
-                    if (item.detailed_description) {
-                        pdf.setFontSize(8);
-                        pdf.setFont('helvetica', 'normal');
-                        pdf.setTextColor(107, 114, 128);
-                        const detailLines = pdf.splitTextToSize(item.detailed_description, contentWidth * 0.5);
-                        pdf.text(detailLines, descX, yPosition + 10);
-                    }
-
-                    pdf.setFontSize(9);
-                    pdf.setFont('helvetica', 'normal');
-                    pdf.setTextColor(0, 0, 0);
-                    pdf.text((item.quantity || 1).toString(), qtyX, yPosition + 6, { align: 'center' });
-                    pdf.text(formatCurrency(item.rate || 0, invoice.currency), rateX, yPosition + 6, { align: 'center' });
-                    pdf.text(formatCurrency(item.amount || 0, invoice.currency), amountX, yPosition + 6, { align: 'right' });
-
-                    yPosition += rowHeight;
-                });
-            }
-
-            // Subtotal row
-            const summaryRowHeight = 10;
-            pdf.setFillColor(249, 250, 251); // gray-50
-            pdf.rect(margin, yPosition, contentWidth, summaryRowHeight, 'F');
-
-            pdf.setFontSize(9);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(0, 0, 0);
-            pdf.text('Subtotal', pageWidth - margin - 60, yPosition + 6);
-            pdf.text(formatCurrency(invoice.subtotal || invoice.total_amount || 0, invoice.currency), amountX, yPosition + 6, { align: 'right' });
-            yPosition += summaryRowHeight;
-
-            // Tax row
-            pdf.rect(margin, yPosition, contentWidth, summaryRowHeight, 'F');
-            pdf.text('Taxes', pageWidth - margin - 60, yPosition + 6);
-            pdf.text(invoice.tax_amount > 0 ? formatCurrency(invoice.tax_amount, invoice.currency) : '—', amountX, yPosition + 6, { align: 'right' });
-            yPosition += summaryRowHeight;
-
-            // Total row (dark background)
-            pdf.setFillColor(51, 65, 85); // slate-700
-            pdf.rect(margin, yPosition, contentWidth, summaryRowHeight + 2, 'F');
-
-            pdf.setFontSize(11);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(255, 255, 255);
-            pdf.text(`Amount Due (${invoice.currency})`, pageWidth - margin - 60, yPosition + 7);
-            pdf.text(formatCurrency(invoice.total_amount, invoice.currency), amountX, yPosition + 7, { align: 'right' });
-
-            yPosition += 25;
-
-            // Payment Information Section
-            pdf.setFontSize(12);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(51, 65, 85);
-            pdf.text('PAYMENT INFORMATION', margin, yPosition);
-
-            pdf.setDrawColor(229, 231, 235);
-            pdf.line(margin, yPosition + 3, pageWidth - margin, yPosition + 3);
-            yPosition += 15;
-
-            // Payment method box (amber background)
-            pdf.setFillColor(255, 251, 235); // amber-50
-            pdf.rect(margin, yPosition, contentWidth, 35, 'F');
-
-            yPosition += 8;
-
-            pdf.setFontSize(11);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(234, 88, 12); // orange-600
-            pdf.text(invoice.payment_method || 'Bank Transfer', margin + 5, yPosition);
-
-            yPosition += 8;
-
-            pdf.setFontSize(9);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(0, 0, 0);
-            pdf.text(`Payment Due: ${new Date(invoice.payment_due_date || invoice.due_date).toLocaleDateString()}`, margin + 5, yPosition);
-
-            if (invoice.payment_reference) {
-                yPosition += 6;
-                pdf.text('Reference: ', margin + 5, yPosition);
-
-                // Reference box
-                pdf.setFillColor(220, 252, 231); // green-100
-                pdf.rect(margin + 25, yPosition - 3, 40, 6, 'F');
-
-                pdf.setFont('helvetica', 'bold');
-                pdf.setTextColor(51, 65, 85);
-                pdf.text(invoice.payment_reference, margin + 27, yPosition);
-            }
-
-            yPosition += 15;
-
-            // Bank details (if available)
-            if (invoice.bank_name || invoice.account_name || invoice.account_number) {
-                pdf.setFillColor(255, 255, 255);
-                pdf.setDrawColor(251, 146, 60); // orange-200
-                pdf.rect(margin, yPosition, contentWidth, 25, 'F');
-                pdf.rect(margin, yPosition, contentWidth, 25, 'S');
-
-                yPosition += 6;
-
-                pdf.setFontSize(10);
-                pdf.setFont('helvetica', 'bold');
-                pdf.setTextColor(51, 65, 85);
-                pdf.text('Recipient Bank Details', margin + 5, yPosition);
-
-                yPosition += 6;
-
-                pdf.setFontSize(8);
-                pdf.setFont('helvetica', 'normal');
-
-                if (invoice.bank_name) {
-                    pdf.text('Bank Name:', margin + 5, yPosition);
-                    pdf.text(invoice.bank_name, margin + 25, yPosition);
-                    yPosition += 4;
-                }
-                if (invoice.account_name) {
-                    pdf.text('Account Name:', margin + 5, yPosition);
-                    pdf.text(invoice.account_name, margin + 30, yPosition);
-                    yPosition += 4;
-                }
-                if (invoice.account_number) {
-                    pdf.text('Account Number:', margin + 5, yPosition);
-                    pdf.text(invoice.account_number, margin + 35, yPosition);
-                }
-            }
-
-            yPosition += 15;
-
-            // Note section (blue background)
-            pdf.setFillColor(239, 246, 255); // blue-50
-            pdf.setDrawColor(96, 165, 250); // blue-400
-            pdf.setLineWidth(2);
-            pdf.line(margin, yPosition, margin, yPosition + 15);
-            pdf.rect(margin + 2, yPosition, contentWidth - 2, 15, 'F');
-
-            pdf.setFontSize(8);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(0, 0, 0);
-            pdf.text('Note:', margin + 5, yPosition + 5);
-
-            pdf.setFont('helvetica', 'normal');
-            const noteText = 'This invoice is issued under the contingency schedule defined in the signed agreement. If the standard milestone schedule applies instead, please advise and a split invoice (USD demo + PHP final) will be issued accordingly.';
-            const noteLines = pdf.splitTextToSize(noteText, contentWidth - 10);
-            pdf.text(noteLines, margin + 15, yPosition + 5);
-
-            // Footer (dark background like header)
-            const footerY = pageHeight - 40;
-            pdf.setFillColor(51, 65, 85); // slate-700
-            pdf.rect(0, footerY, pageWidth, 40, 'F');
-
-            pdf.setFontSize(20);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(145, 205, 73); // #91cd49
-            pdf.text('reaiv', pageWidth / 2, footerY + 15, { align: 'center' });
-
-            pdf.setFontSize(10);
-            pdf.text('REAIV - Reimagine AI Ventures', pageWidth / 2, footerY + 22, { align: 'center' });
-
-            pdf.setFontSize(8);
-            pdf.setTextColor(255, 255, 255, 0.8);
-            pdf.text('Think different. Build intelligent. Scale effortlessly.', pageWidth / 2, footerY + 28, { align: 'center' });
-
-            pdf.setFontSize(6);
-            pdf.setTextColor(255, 255, 255, 0.6);
-            pdf.text('This invoice was generated using the REAIV template format.', pageWidth / 2, footerY + 35, { align: 'center' });
-
-            // Download the PDF
-            pdf.save(`Invoice_${invoice.invoice_number || invoice.id}.pdf`);
-            toast.success('Invoice PDF downloaded successfully!');
-
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            toast.error('Failed to generate PDF. Please try again.');
-        } finally {
-            setDownloadingId(null);
-        }
-    };
 
     const openDeleteDialog = (itemId: string, otpId: string, type: 'proposal' | 'invoice') => {
         setSelectedItem({ id: itemId, otp_id: otpId, type });
@@ -1137,10 +1241,10 @@ export default function DashboardListingPage() {
                                                     <SelectTrigger className="w-28 h-8 p-0 border-none bg-transparent">
                                                         <SelectValue asChild>
                                                             <span className={`px-2 py-1 rounded-full text-xs font-semibold cursor-pointer ${invoice.status === 'paid'
-                                                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                                    : invoice.status === 'overdue'
-                                                                        ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                                                                        : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                                : invoice.status === 'overdue'
+                                                                    ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                                                                    : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
                                                                 }`}>
                                                                 {updatingStatusId === invoice.id ? (
                                                                     <span className="flex items-center gap-1">
@@ -1219,22 +1323,33 @@ export default function DashboardListingPage() {
                                                         )}
                                                     </Button>
                                                 )}
-                                                {/* <Button
-                                                    variant="outline"
-                                                    className="px-3 text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    disabled={downloadingId === invoice.id}
-                                                    onClick={() => downloadInvoicePDF(invoice)}
-                                                    aria-label="Download Invoice PDF"
+                                                {/* React-PDF Download Button */}
+                                                <PDFDownloadLink
+                                                    document={<InvoicePDF
+                                                        invoice={invoice}
+                                                        formatCurrency={formatCurrency}
+                                                        formatDate={formatDate}
+                                                    />}
+                                                    fileName={`Invoice_${invoice.invoice_number || invoice.id}.pdf`}
                                                 >
-                                                    {downloadingId === invoice.id ? (
-                                                        "Generating..."
-                                                    ) : (
-                                                        <>
-                                                            <Download size={14} />
-                                                            PDF
-                                                        </>
+                                                    {({ blob, url, loading, error }) => (
+                                                        <Button
+                                                            variant="outline"
+                                                            className="px-3 text-blue-600 border-blue-600 hover:bg-blue-50"
+                                                            disabled={loading}
+                                                            aria-label="Download Invoice PDF"
+                                                        >
+                                                            {loading ? (
+                                                                "Generating..."
+                                                            ) : (
+                                                                <>
+                                                                    <Download size={14} />
+                                                                    PDF
+                                                                </>
+                                                            )}
+                                                        </Button>
                                                     )}
-                                                </Button> */}
+                                                </PDFDownloadLink>
                                                 <Button
                                                     variant="secondary"
                                                     style={{ borderColor: '#8CE232' }}
