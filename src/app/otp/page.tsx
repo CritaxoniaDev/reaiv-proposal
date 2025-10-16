@@ -31,14 +31,23 @@ export default function OTPPage() {
       });
       const result = await res.json();
 
-      if (res.ok && result.success && result.id && result.type) {
+      if (res.ok && result.success) {
         toast.success("Access granted!");
+        
+        // Store JWT token if provided
+        if (result.token) {
+          localStorage.setItem("auth_token", result.token);
+        }
+
         setTimeout(() => {
           // Route based on type
           if (result.type === "proposal") {
             router.push(`/proposal/${result.id}`);
           } else if (result.type === "invoice") {
             router.push(`/invoice/${result.id}`);
+          } else if (result.type === "custom") {
+            // Redirect to DARAW Agency proposal with JWT
+            router.push(`/pricing/darawagency?token=${result.token}`);
           }
         }, 1200);
       } else {
